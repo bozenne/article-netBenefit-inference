@@ -1,0 +1,47 @@
+This directory contains the R code used to generate the results
+presented in the article. It is organized as follows:
+- *the BATCH files* define the simulation studies. Each file was
+  excecuted 40 times using a different id (obtain using
+  =Sys.getenv("SGE_TASK_ID")= in R) and therefore a different seed
+  when randomly generating the data. The output of the simulations
+  were saved in a =Results= directory, not uploaded on Github to save
+  space but available upon request.  
+
+- *the BUILD file* gather the results of the various simulations by
+  reading the data in the =Results= directory. It creates the tables and figures of section 5: simulation study
+
+- *the ILLUSTRATION files* contains the code used to generate the results, tables, and figures for section 6. 
+
+#+BEGIN_SRC R  :results output   :exports results  :session *R* :cache yes 
+sessionInfo()
+#+END_SRC
+
+#+RESULTS[<2018-09-15 13:59:50> b44be29e99bce3ce330d2aefe349e6976f278121]:
+#+begin_example
+R version 3.6.1 (2019-07-05)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: openSUSE 13.1 (Bottle) (x86_64)
+
+Matrix products: default
+BLAS:   /usr/local/lib64/R/lib/libRblas.so
+LAPACK: /usr/local/lib64/R/lib/libRlapack.so
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] data.table_1.12.8 BuyseTest_2.1.5   Rcpp_1.0.4.6     
+
+loaded via a namespace (and not attached):
+ [1] compiler_3.6.1     Matrix_1.2-17      parallel_3.6.1     survival_2.44-1.1 
+ [5] prodlim_2019.11.13 splines_3.6.1      grid_3.6.1         lava_1.6.7        
+ [9] stats4_3.6.1       lattice_0.20-38   
+#+end_example
