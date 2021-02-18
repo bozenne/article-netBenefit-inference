@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: maj 22 2020 (10:17) 
 ## Version: 
-## Last-Updated: jun  6 2020 (14:51) 
+## Last-Updated: okt  2 2020 (18:31) 
 ##           By: Brice Ozenne
-##     Update #: 35
+##     Update #: 51
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -33,66 +33,190 @@ library(data.table)
 
 ## * data management
 ## ** load
-df.prodige <- read.csv(file.path(path.data,"data PRODIGE.csv"), sep = ";", header = TRUE)
+dt.prodige <- as.data.table(read.csv(file.path(path.data,"prodige.csv"), sep = ";", header = TRUE))
 
 ## ** process
-df.prodige$d_dn2 <- as.Date(df.prodige$d_dn, "%d/%m/%Y")
-df.prodige$randodt2 <- as.Date(df.prodige$randodt, "%d/%m/%Y")
-df.prodige$bras <- ifelse(df.prodige$bras==2,0,1)
-df.prodige$OS <- as.numeric(difftime(df.prodige$d_dn2,df.prodige$randodt2,units="days")/30.44)
+dt.prodige[, d_dn2 := as.Date(d_dn, "%d/%m/%Y")]
+dt.prodige[, randodt2 := as.Date(randodt, "%d/%m/%Y")]
+dt.prodige[, bras := factor(ifelse(bras==2,"Gemcitabine","Folfirinox"), c("Gemcitabine","Folfirinox"))]
+dt.prodige[, OS := as.numeric(difftime(d_dn2,randodt2,units="days")/30.44)]
 
+M.tox <- cbind(inf = dt.prodige[,pmax(mx_inf1, mx_inf2, mx_inf3, mx_inf4, 0, na.rm = TRUE)],
+               car = dt.prodige[,pmax(mx_car1, mx_car2, mx_car3, mx_car4, mx_car5, mx_car6, mx_car7, 0, na.rm = TRUE)],
+               aon = dt.prodige[,pmax(mx_aon1, mx_aon2, mx_aon3, mx_aon4, mx_aon5, mx_aon6, mx_aon7, 0, na.rm = TRUE)],
+               pul = dt.prodige[,pmax(mx_pul1, mx_pul2, mx_pul3, mx_pul4, 0, na.rm = TRUE)],
+               aut = dt.prodige[,pmax(mx_aut1, mx_aut2, mx_aut3, mx_aut4, 0, na.rm = TRUE)],
+               ren = dt.prodige[,pmax(mx_ren1, mx_ren2, mx_ren3, mx_ren4, 0, na.rm = TRUE)],
+               gas = dt.prodige[,pmax(mx_gas1, mx_gas2, mx_gas3, mx_gas4, mx_gas5, mx_gas6, mx_gas7, 0, na.rm = TRUE)],
+               der = dt.prodige[,pmax(mx_der1, mx_der2, mx_der3, mx_der4, mx_der5, mx_der6, mx_der7, 0, na.rm = TRUE)],
+               tog = dt.prodige[,pmax(mx_tog1, mx_tog2, mx_tog3, mx_tog4, 0, na.rm = TRUE)],
+               uro = dt.prodige[,pmax(mx_uro1, mx_uro2, mx_uro3, mx_uro4, 0, na.rm = TRUE)]
+               )
+dt.prodige[,toxicity := apply(M.tox,1, max)]
+dt.prodige[, strata := interaction(oms_r,loca_r)]
+  
+rm.cols <- setdiff(names(dt.prodige),c("OS","bras","toxicity","etat","strata"))
+dt.prodige[,c(rm.cols) := NULL]
+
+## ** check values
+dt.prodige[,.N, by = "bras"]
+##           bras   N
+## 1: Gemcitabine 171
+## 2:  Folfirinox 171
+
+
+e.coxph <- coxph(Surv(OS, etat)~bras, data = dt.prodige)
+summary(e.coxph)
+##                exp(coef) exp(-coef) lower .95 upper .95
+## brasFolfirinox    0.5674      1.762     0.446    0.7219
+
+e.coxphS <- coxph(Surv(OS, etat)~strata(bras), data = dt.prodige, x = TRUE, y = TRUE)
+predictCox(e.coxphS, times = c(11.1,6.7))
+   ## observation      strata times cumhazard survival
+## 1:           1 Gemcitabine   6.7     0.669    0.512
+## 4:           4  Folfirinox  11.1     0.676    0.509
+
+dt.prodige[,table(toxicity, bras)]
+##         bras
+## toxicity Gemcitabine Folfirinox
+##        0           2          6
+##        1           5          7
+##        2          62         40
+##        3          67         81
+##        4          34         36
+##        5           1          1
 ## * re-analysis
+## ** point estimate
 system.time(
-    e.BT <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                      data = df.prodige, method.inference = "none")
+    e.BT <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity, threshold = 0.5, operator = "<0"),
+                      data = dt.prodige, method.inference = "none")
 )
-## user  system elapsed 
-## 0.14    0.00    0.22 
+   ## user  system elapsed 
+   ## 0.03    0.00    0.03 
 
 system.time(
-    e.BT_Ustat <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                            data = df.prodige, method.inference = "u-statistic")
+    e.BT_Ustat <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity, threshold = 0.5, operator = "<0") + strata,
+                            data = dt.prodige[strata %in% c("0.1","1.1","0.2","1.2")], method.inference = "u-statistic")
 )
+   ## user  system elapsed 
+   ## 0.10    0.00    0.11 
 
 summary(e.BT_Ustat)
 ## endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)  delta  Delta CI [2.5% ; 97.5%]    p.value    
-##       OS         2      100        56.88          26.49      16.61     0.02 0.3039 0.3039   [0.1819;0.4166] 2.1557e-06 ***
+##       OS       2.0   100.00        56.88          26.49      16.61     0.02 0.3039 0.3039   [0.1819;0.4166] 2.1557e-06 ***
+## toxicity       0.5    16.63         6.53           4.41       5.69     0.00 0.0212 0.3251   [0.2017;0.4383] 6.4399e-07 ***
 system.time(
-    e.BT_boot <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                           data = df.prodige, method.inference = "bootstrap", n.resampling = 1e3,
+    e.BT_boot <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+                           data = dt.prodige, method.inference = "bootstrap", n.resampling = 1e4,
                            trace = 1)
 )
+##   user  system elapsed 
+## 220.60    0.47  225.61 
+
 summary(e.BT_boot)
-## endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)  delta  Delta CI [2.5% ; 97.5%]    p.value    
-##       OS         2      100        56.88          26.49      16.61     0.02 0.3039 0.3039   [0.1797;0.4101] < 2.22e-16 ***
+ ##    endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)  delta  Delta CI [2.5% ; 97.5%]    p.value    
+ ##           OS       2.0   100.00        56.88          26.49      16.61     0.02 0.3039 0.3039   [0.1816;0.4204] < 2.22e-16 ***
+ ## toxicity.num       0.5    16.63         6.59           6.08       3.96     0.00 0.0051 0.3090   [0.1865;0.4273] < 2.22e-16 ***
 
 library(microbenchmark)
-e.bench <- microbenchmark(none = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                                           data = df.prodige, method.inference = "none"),
-                          Ustat = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                                            data = df.prodige, method.inference = "u-statistic"),
-                          bootstrap = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2),
-                                                data = df.prodige, method.inference = "bootstrap"),
+e.bench <- microbenchmark(none = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+                                           data = dt.prodige, method.inference = "none"),
+                          Ustat = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+                                            data = dt.prodige, method.inference = "u-statistic"),
+                          bootstrap = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+                                                data = dt.prodige, method.inference = "bootstrap"),
                           times = 5)
 summary(e.bench, unit = "s")
-##        expr         min         lq        mean     median          uq        max neval cld
-## 1      none  0.03884476  0.0804832  0.07901163  0.0845405  0.08753235  0.1036573     5  a 
-## 2     Ustat  0.28849105  0.2895154  0.35713805  0.2909330  0.32857495  0.5881758     5  a 
-## 3 bootstrap 33.00206102 53.8771571 56.58843587 62.3667257 66.63153893 67.0646965     5   b
+## >        expr         min          lq        mean      median          uq         max neval cld
+## 1      none  0.02995687  0.03716029  0.03944084  0.04019474  0.04189177  0.04800055     5  a 
+## 2     Ustat  0.09199358  0.09573385  0.10499052  0.09789393  0.11656605  0.12276522     5  a 
+## 3 bootstrap 23.13373495 23.19421713 24.29345613 23.53133771 25.09936082 26.50863005     5   b
+
+if(FALSE){
+    ## install.packages("http://cran.r-project.org/src/contrib/Archive/BuyseTest/BuyseTest_1.0.tar.gz", lib = "C:/Users/hpl802/Downloads/LIBRTEMPO", type = "source", repos = NULL)
+    library(BuyseTest, lib.loc="C:/Users/hpl802/Downloads/LIBRTEMPO") ## v2
+    e.BT <- BuyseTest(treatment = "bras", endpoint = c("OS","toxicity"), type = c("TTE","cont"), censoring = c("etat",NA), threshold = c(2,0.5),
+                      method = "Peron", data = dt.prodige[strata%in%c("0.1","1.1","0.2","1.2")], n.bootstrap = 0, strata = "strata")
+    e.BT
+    dt.prodige[, strata := interaction(oms_r,loca_r)]
+    dt.prodige[,table(strata,bras)]
+}
+
+## ** sensitivity analysis
+seqTh <- seq(0,6,0.5)
+n.seqTh <- length(seqTh)
+n.data <- NROW(dt.prodige)
+
+ls.e.BT <- lapply(seqTh, function(iTh){
+    ff <- eval(parse(text = paste0("bras ~ tte(OS, status = etat, threshold = ",iTh,")  + cont(toxicity.num, threshold = 0.5)")))
+    BuyseTest(as.formula(ff),
+              trace = 0,
+              data = dt.prodige, method.inference = "u-statistic")
+})
+A.iid <- array(NA, dim = c(n.data, n.seqTh, 2))
+A.iid[,,1] <- do.call(cbind,lapply(ls.e.BT,function(iObj){
+    getIid(iObj, endpoint = 1)[[1]][,"favorable"]-getIid(iObj, endpoint = 1)[[1]][,"unfavorable"]
+}))
+A.iid[,,2] <- do.call(cbind,lapply(ls.e.BT,function(iObj){
+    getIid(iObj, endpoint = 2)[[1]][,"favorable"]-getIid(iObj, endpoint = 2)[[1]][,"unfavorable"]
+}))
+M.beta <- do.call(cbind,lapply(ls.e.BT,function(iObj){
+    coef(iObj)
+}))
+M.se <- do.call(cbind,lapply(ls.e.BT,function(iObj){
+    sqrt(iObj@covariance[,"netBenefit"])
+}))
+sqrt(diag(crossprod(A.iid[,,1])))
+sqrt(diag(crossprod(A.iid[,,2])))
+
+dt.res <- as.data.table(transformCIBP(estimate = M.beta,
+                        se = M.se,
+                        iid = A.iid,
+                        null = 0,
+                        conf.level = 0.95,
+                        alternative = "two.sided",
+                        ci = TRUE, type = "none", min.value = -1, max.value = 1,
+                        band = 1, method.band = "maxT-simulation", n.sim = 1e3, seed = 10,
+                        p.value = FALSE),
+                        estimate = M.beta,
+                        se = M.se)
+dt.res[["estimate"]] <- M.beta
+dt.res[["se"]] <- M.se
+dt.res[,c("row") := c("survival","survival+toxicity")[.SD$row]]
+dt.res[,c("time") := seqTh[.SD$time]]
+setnames(dt.res, old = c("row","time"), new = c("endpoint","threshold"))
+
+gg <- ggplot(dt.res, aes(x=threshold))
+gg <- gg + geom_line(aes(y=estimate, group = endpoint, color = endpoint, linetype = "estimate")) + geom_point(aes(y=estimate, shape = endpoint, color = endpoint))
+## gg <- gg + geom_line(aes(y=lower, group = endpoint, linetype = "ci")) + geom_line(aes(y=upper, group = endpoint, linetype = "ci"))
+gg <- gg + geom_line(aes(y=lowerBand, group = endpoint, color = endpoint, linetype = "band")) + geom_line(aes(y=upperBand, group = endpoint, color = endpoint, linetype = "band"))
+gg <- gg + geom_hline(aes(yintercept = 0))
+gg <- gg + xlab("Threshold of minimal clinical significance for survival (months)")
+gg <- gg + ylab("Net benefit")
+gg <- gg + scale_linetype_manual(name = NULL,
+                                labels = c("simultaneous confidence intervals","point estimate"),
+                                values = c(2,1))
+gg <- gg + theme(text = element_text(size=10))
+
+coef(ls.e.BT[[1]], statistic = "netBenefit")
+confint(ls.e.BT[[1]])
+
+
+lapply(ls.e.BT,coef)
 
 ## * simulation parameters
-AFT0 <- flexsurvreg(Surv(OS, etat) ~ 1, data = df.prodige[df.prodige$bras == 0,], dist = "Weibull")
-AFT1 <- flexsurvreg(Surv(OS, etat) ~ 1, data = df.prodige[df.prodige$bras == 1,], dist = "Weibull")
+AFT0 <- flexsurvreg(Surv(OS, etat) ~ 1, data = dt.prodige[dt.prodige$bras == 0,], dist = "Weibull")
+AFT1 <- flexsurvreg(Surv(OS, etat) ~ 1, data = dt.prodige[dt.prodige$bras == 1,], dist = "Weibull")
 param0 <- exp(coef(AFT0))
 param1 <- exp(coef(AFT1))
 
-AFT0.cens <- flexsurvreg(Surv(OS, etat==0) ~ 1, data = df.prodige[df.prodige$bras == 0,], dist = "Weibull")
-AFT1.cens <- flexsurvreg(Surv(OS, etat==0) ~ 1, data = df.prodige[df.prodige$bras == 1,], dist = "Weibull")
+AFT0.cens <- flexsurvreg(Surv(OS, etat==0) ~ 1, data = dt.prodige[dt.prodige$bras == 0,], dist = "Weibull")
+AFT1.cens <- flexsurvreg(Surv(OS, etat==0) ~ 1, data = dt.prodige[dt.prodige$bras == 1,], dist = "Weibull")
 param0.cens <- exp(coef(AFT0.cens))
 param1.cens <- exp(coef(AFT1.cens))
 
 
-e.coxph <- coxph(Surv(OS,etat)~strata(bras), data = df.prodige, x = TRUE, y = TRUE)
+e.coxph <- coxph(Surv(OS,etat)~strata(bras), data = dt.prodige, x = TRUE, y = TRUE)
 pred.coxph <- predictCox(e.coxph, type = "survival", keep.newdata = TRUE)
 gg.coxph <- autoplot(pred.coxph,plot = FALSE)$plot
 
@@ -126,7 +250,7 @@ gg.coxph <- gg.coxph + scale_shape_manual(name = "",
                                           labels = c("censoring","death"))
 gg.coxph <- gg.coxph + theme(legend.position="right", text = element_text(size=15))
 gg.coxph <- gg.coxph + xlab("Months") + ylab("Probability of survival")
-ggsave(gg.coxph, filename = file.path("p:/Cluster/GPC/Article-inference-Ustatistic/Results/ILLUSTRATION-folfirinox-surv.pdf"), height = 5, width = 7.5)
+ggsave(gg.coxph, filename = file.path("p:/Cluster/GPC/Article-inference-Ustatistic/Results/ILLUSTRATION-folfirinox-surv.pdt"), height = 5, width = 7.5)
 
 
 ## ** find rho
@@ -159,21 +283,21 @@ for(iRho in 1:length(seqRho)){
                     shape.Censoring.C = param0.cens["shape"],
                     shape.Censoring.T = param1.cens["shape"])
 
-    df.sim <- simBuyseTest(n,
+    dt.sim <- simBuyseTest(n,
                            argsBin = argsBin,
                            argsTTE = argsTTE,
                            latent = TRUE)
-    df.sim$toxicity.num <- as.numeric(df.sim$toxicity)-1
-    df.sim$one <- 1
+    dt.sim$toxicity.num <- as.numeric(dt.sim$toxicity)-1
+    dt.sim$one <- 1
 
     ## Check marginal distribution
-    ## plot(prodlim(Hist(OS, etat) ~ bras, data = df.prodige), legend = FALSE, atrisk = FALSE)
-    ## plot(prodlim(Hist(eventtime, status) ~ treatment, data = df.sim), legend = FALSE, atrisk = FALSE, add = TRUE)
+    ## plot(prodlim(Hist(OS, etat) ~ bras, data = dt.prodige), legend = FALSE, atrisk = FALSE)
+    ## plot(prodlim(Hist(eventtime, status) ~ treatment, data = dt.sim), legend = FALSE, atrisk = FALSE, add = TRUE)
 
-    ## df.sim[treatment == "C", table(toxicity)/.N]
-    ## df.sim[treatment == "T", table(toxicity)/.N]
+    ## dt.sim[treatment == "C", table(toxicity)/.N]
+    ## dt.sim[treatment == "T", table(toxicity)/.N]
     iE.BT <- BuyseTest(treatment ~ tte(eventtimeUncensored, status = one, threshold = 2) + cont(toxicity.num, threshold = 0.5),
-                       data = df.sim)
+                       data = dt.sim)
     out <- rbind(out,
                  cbind(rho = seqRho[iRho], delta1 = coef(iE.BT)[1], delta2 = coef(iE.BT)[2]-coef(iE.BT)[1], Delta = coef(iE.BT)[2])
                  )

@@ -16,7 +16,6 @@ presented in the article. It is organized as follows:
 sessionInfo()
 #+END_SRC
 
-#+RESULTS[<2018-09-15 13:59:50> b44be29e99bce3ce330d2aefe349e6976f278121]:
 #+begin_example
 R version 3.6.1 (2019-07-05)
 Platform: x86_64-pc-linux-gnu (64-bit)
