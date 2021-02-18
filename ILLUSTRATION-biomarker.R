@@ -2,6 +2,8 @@
 # setwd(path)
 options(width = 100)
 
+library(riskRegression)
+library(survival)
 library(data.table)
 library(BuyseTest)
 library(ggplot2)
@@ -51,12 +53,15 @@ dt.estra[, mean(estra),by = "group"]
 # 1: non-user 0.37151515
 # 2:     user 0.09454545
 
-## * BuyseTest
+
+## * GPC
 BuyseTest.options(order.Hprojection = 2)
-e.BT_GehanL <- BuyseTest(group ~ tte(estra, status = "observed", threshold = 0.05, censoring = "left"),
+e.BT_GehanL <- BuyseTest(group ~ tte(estra, status = observed, threshold = 0.05, censoring = "left"),
                          data = dt.estra,
                          scoring.rule = "Gehan")
 summary(e.BT_GehanL)
+head(dt.estra)
+
 # > results
 # endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)   delta   Delta
 # estra      0.05      100         6.34          72.73       7.44     13.5 -0.6639 -0.6639
@@ -67,6 +72,17 @@ summary(e.BT_GehanL)
 ##                          data = dt.estra, scoring.rule = "Gehan")
 ## summary(e.BT_GehanR)
 
+## * answer to reviewer 1
+e.cox <- coxph(Surv(max(estra)-estra, observed) ~ strata(group),
+               data = dt.estra, x = TRUE, y = TRUE)
+e.pred <- predictCox(e.cox, keep.newdata = TRUE)
+gg <- autoplot(e.pred, type = "survival", plot = FALSE)
+gg2 <- gg$plot + scale_x_continuous(breaks = c(0,0.25,0.5,0.75,1,1.25),
+                                    labels = -c(0,0.25,0.5,0.75,1,1.25)+max(dt.estra$estra))
+gg2 <- gg2 + ylab("Survival") + xlab("Estradiol (nmol/L)") + labs(colour="OC group", shape = "Left censored")
+gg2 <- gg2 + scale_shape_manual(breaks = c(0,1), values = c(3,18), labels = c("yes","no"))
+gg2 <- gg2 + theme(text = element_text(size=20))
+ggsave(gg2, filename = "figures/survivalCurve-biomarker.pdf")
 
 
 
