@@ -2,8 +2,6 @@
 # setwd(path)
 options(width = 100)
 
-library(riskRegression)
-library(survival)
 library(data.table)
 library(BuyseTest)
 library(ggplot2)
@@ -31,19 +29,6 @@ dt.estra[, .(n = .N, observed = sum(observed), observedPC = 100*mean(observed)),
 #1: non-user 33       28   84.84848
 #2:     user 11        5   45.45455
 
-gg.scatter <- ggplot(dt.estra,aes(x = id2, y = estra, color = group, shape = observed.char))
-gg.scatter <- gg.scatter + geom_point()
-gg.scatter <- gg.scatter + labs(colour="OC group")
-gg.scatter <- gg.scatter + scale_shape_manual("Left-censored",
-                                              values = c(0,19),
-                                              labels = c("yes","no"))
-gg.scatter <- gg.scatter + geom_point() + xlab("Patient id") + ylab("Estradiol (nmol/L)")
-gg.scatter
-
-ggsave(gg.scatter, file = file.path("Results","ILLUSTRATION-scatterplot.pdf"))
-
-gg.hist <- ggplot(dt.estra,aes(estra, fill = group)) + geom_histogram(breaks = seq(0,1.25,by = 0.025))
-
 dt.estra[, sd(estra),by = "group"]
 # group         V1
 # 1: non-user 0.31279108
@@ -53,15 +38,38 @@ dt.estra[, mean(estra),by = "group"]
 # 1: non-user 0.37151515
 # 2:     user 0.09454545
 
+## * Descriptive graphs
+gg.scatter <- ggplot(dt.estra,aes(x = id2, y = estra, color = group, shape = observed.char))
+gg.scatter <- gg.scatter + geom_point()
+gg.scatter <- gg.scatter + labs(colour="OC group")
+gg.scatter <- gg.scatter + scale_shape_manual("Below the detection limit",
+                                              values = c(0,19),
+                                              labels = c("yes","no"))
+gg.scatter <- gg.scatter + geom_point() + xlab("Patient id") + ylab("Estradiol (nmol/L)")
+gg.scatter
 
-## * GPC
+ggsave(gg.scatter, file = file.path("Results","ILLUSTRATION-scatterplot.pdf"))
+
+## gg.hist <- ggplot(dt.estra,aes(estra, fill = group)) + geom_histogram(breaks = seq(0,1.25,by = 0.025))
+
+e.cox <- coxph(Surv(max(estra)-estra, observed) ~ strata(group),
+               data = dt.estra, x = TRUE, y = TRUE)
+e.pred <- predictCox(e.cox, keep.newdata = TRUE)
+gg <- autoplot(e.pred, type = "survival", plot = FALSE)
+gg2 <- gg$plot + scale_x_continuous(breaks = c(0,0.25,0.5,0.75,1,1.25),
+                                    labels = -c(0,0.25,0.5,0.75,1,1.25)+max(dt.estra$estra))
+gg2 <- gg2 + ylab("Survival") + xlab("Estradiol (nmol/L)") + labs(colour="OC group", shape = "Left censored")
+gg2 <- gg2 + scale_shape_manual(breaks = c(0,1), values = c(3,18), labels = c("yes","no"))
+gg2 <- gg2 + theme(text = element_text(size=20))
+ggsave(gg2, filename = file.path("Results","ILLUSTRATION-survival-estradiol.pdf"))
+
+
+## * BuyseTest
 BuyseTest.options(order.Hprojection = 2)
-e.BT_GehanL <- BuyseTest(group ~ tte(estra, status = observed, threshold = 0.05, censoring = "left"),
+e.BT_GehanL <- BuyseTest(group ~ tte(estra, status = "observed", threshold = 0.05, censoring = "left"),
                          data = dt.estra,
                          scoring.rule = "Gehan")
 summary(e.BT_GehanL)
-head(dt.estra)
-
 # > results
 # endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)   delta   Delta
 # estra      0.05      100         6.34          72.73       7.44     13.5 -0.6639 -0.6639
@@ -72,17 +80,6 @@ head(dt.estra)
 ##                          data = dt.estra, scoring.rule = "Gehan")
 ## summary(e.BT_GehanR)
 
-## * answer to reviewer 1
-e.cox <- coxph(Surv(max(estra)-estra, observed) ~ strata(group),
-               data = dt.estra, x = TRUE, y = TRUE)
-e.pred <- predictCox(e.cox, keep.newdata = TRUE)
-gg <- autoplot(e.pred, type = "survival", plot = FALSE)
-gg2 <- gg$plot + scale_x_continuous(breaks = c(0,0.25,0.5,0.75,1,1.25),
-                                    labels = -c(0,0.25,0.5,0.75,1,1.25)+max(dt.estra$estra))
-gg2 <- gg2 + ylab("Survival") + xlab("Estradiol (nmol/L)") + labs(colour="OC group", shape = "Left censored")
-gg2 <- gg2 + scale_shape_manual(breaks = c(0,1), values = c(3,18), labels = c("yes","no"))
-gg2 <- gg2 + theme(text = element_text(size=20))
-ggsave(gg2, filename = "figures/survivalCurve-biomarker.pdf")
 
 
 

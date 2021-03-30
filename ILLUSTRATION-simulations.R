@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: apr  3 2020 (13:22) 
 ## Version: 
-## Last-Updated: maj 22 2020 (10:16) 
+## Last-Updated: okt  8 2020 (17:31) 
 ##           By: Brice Ozenne
-##     Update #: 31
+##     Update #: 32
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -83,7 +83,7 @@ dt.res[,.(rep = .N, estimate = mean(estimate), type1error = mean(p.value<=0.05))
 ## 5: studentized permutation 44 10000 -4.777548e-04     0.0476
 ## 6:             u-statistic 44 10000 -4.777548e-04     0.0497
 
-## * [NO USED]Bias: t-test vs.GPC
+## * [NO USED] Bias: t-test vs.GPC
 warper <- function(i, n = c(4,7), m = c(12,21), return.data = FALSE){
                                         # ## n <- c(4,7)*500; m <- c(12,21)*500;
     mu <- 0.3

@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: jun  6 2020 (15:06) 
+## Last-Updated: mar 30 2021 (15:21) 
 ##           By: Brice Ozenne
-##     Update #: 217
+##     Update #: 278
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -16,45 +16,50 @@
 ### Code:
 
 ## * ggTiming
-ggTiming <- function(data, file = NULL, plot = TRUE, txt.size = 20){
+ggTiming <- function(data, type.data = "raw", file = NULL, plot = TRUE, txt.size = 20){
     require(ggpubr)
+    type.data <- match.arg(type.data, c("raw","processed"))
 
-    Ufile <- unique(data$iFile)
-    if(is.null(file)){
-        file <- 1:length(Ufile)
-    }else  if(any(file %in% 1:length(Ufile) == FALSE)){
-        stop("unknown file selected \n")
-    }
-    if("threshold" %in% names(data) && length(unique(data$threshold))>1){
-        stop("Cannot handle multple thresholds")
-    }
-    if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
-        stop("Cannot handle multple endpoints")
-    }
+    if(type.data == "raw"){
+        Ufile <- unique(data$iFile)
+        if(is.null(file)){
+            file <- 1:length(Ufile)
+        }else  if(any(file %in% 1:length(Ufile) == FALSE)){
+            stop("unknown file selected \n")
+        }
+        if("threshold" %in% names(data) && length(unique(data$threshold))>1){
+            stop("Cannot handle multple thresholds")
+        }
+        if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
+            stop("Cannot handle multple endpoints")
+        }
 
-    dtW.gg <- data[method %in% c("Gehan","Peron") & Hprojection == 1 & iFile %in% Ufile[file],
-                   .SD, .SDcols = c("n","method","timeAll","timeEstimate")]
+        dtW.gg <- data[method %in% c("Gehan","Peron") & Hprojection == 1 & iFile %in% Ufile[file],
+                       .SD, .SDcols = c("n","method","timeAll","timeEstimate")]
 
-    dtW.gg[, time := timeAll/timeEstimate]
-    dtL1.gg <- dtW.gg[, .(n,method,time)]
+        dtW.gg[, time := timeAll/timeEstimate]
+        dtL1.gg <- dtW.gg[, .(n,method,time)]
 
-    dtL2.gg <- melt(dtW.gg,
-                    id.vars = c("n","method"),
-                    measure.vars = c("timeAll","timeEstimate"),
-                    value.name = "time",
-                    variable.name = "type")
+        dtL2.gg <- melt(dtW.gg,
+                        id.vars = c("n","method"),
+                        measure.vars = c("timeAll","timeEstimate"),
+                        value.name = "time",
+                        variable.name = "type")
 
-    dtL2.gg[, type := factor(type, levels = c("timeEstimate","timeAll"),
-                             labels = c("estimate","estimate+se"))]
-    dtL.gg <- rbind(cbind(dtL1.gg[,.(n,method)], type = "relative", dtL1.gg[,.(time)]),
-                    cbind(dtL2.gg))
+        dtL2.gg[, type := factor(type, levels = c("timeEstimate","timeAll"),
+                                 labels = c("estimate","estimate+se"))]
+        dtL.gg <- rbind(cbind(dtL1.gg[,.(n,method)], type = "relative", dtL1.gg[,.(time)]),
+                        cbind(dtL2.gg))
    
-    dtL.gg[, n := factor(n, levels = sort(unique(n)))]
-    dtL.gg[, scoring.rule := factor(method, levels = c("Gehan","Peron"),
-                                    labels = c("Gehan's scoring rule","Peron's scoring rule"))]
-    dtL.gg[, type := factor(type,
-                            levels = c("estimate","estimate+se","relative"),
-                            labels = c("estimate","estimate with s.e.","ratio"))]
+        dtL.gg[, n := factor(n, levels = sort(unique(n)))]
+        dtL.gg[, scoring.rule := factor(method, levels = c("Gehan","Peron"),
+                                        labels = c("Gehan's scoring rule","Peron's scoring rule"))]
+        dtL.gg[, type := factor(type,
+                                levels = c("estimate","estimate+se","relative"),
+                                labels = c("estimate","estimate with s.e.","ratio"))]
+    }else if(type.data == "processed"){
+        dtL.gg <- data
+    }
 
     gg1 <- ggplot(data = dtL.gg[type == levels(type)[1]], mapping = aes(x = n, y = time))
     gg1 <- gg1 + geom_boxplot()
@@ -81,8 +86,14 @@ ggTiming <- function(data, file = NULL, plot = TRUE, txt.size = 20){
                        text = element_text(size=txt.size),
                        plot.margin = unit(c(-0.1,0.1,0.2,0.5), "cm"))
 
-    gg <- ggarrange(gg1, gg2, gg3, ncol=1, nrow=3, common.legend = TRUE, legend="bottom")
-
+    if(file.exists("tempo.pdf")){
+        stop("Cannot run the function as a file name tempo.pdf is in the working directory. \n")
+    }
+    pdf("tempo.pdf")
+    gg <- try(ggarrange(plotlist = list(gg1, gg2, gg3), ncol=1, nrow=3, common.legend = TRUE, legend="bottom"), silent = TRUE)
+    dev.off()
+    file.remove("tempo.pdf")
+    
     if(plot){
         print(gg)
     }
@@ -92,26 +103,35 @@ ggTiming <- function(data, file = NULL, plot = TRUE, txt.size = 20){
 }
 
 ## * ggBias
-ggBias <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
-    Ufile <- unique(data$iFile)
-    if(is.null(file)){
-        file <- length(Ufile)
-    }else  if(any(file %in% 1:length(Ufile) == FALSE)){
-        stop("unknown file selected \n")
-    }
-    if("threshold" %in% names(data) && length(unique(data$threshold))>1){
-        stop("Cannot handle multple thresholds")
-    }
-    if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
-        stop("Cannot handle multple endpoints")
-    }
+ggBias <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
+    type.data <- match.arg(type.data, c("raw","processed"))
 
-    dtW.gg <- data[Hprojection == 1 & iFile %in% Ufile[file],.(n,method,estimate)]
-    dtW.gg[, expected := mean(.SD[n==max(n) & method == "GS",estimate])]
-
-    dtW.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
-    dtW.gg[, n := factor(n, levels = sort(unique(n)))]    
-    dtW.gg[, sample.size := factor(paste0("sample size = ",n), paste0("sample size = ",unique(n)))]
+    if(type.data == "raw"){
+        Ufile <- unique(data$iFile)
+        if(is.null(file)){
+            file <- 1:length(Ufile)
+        }else  if(any(file %in% 1:length(Ufile) == FALSE)){
+            stop("unknown file selected \n")
+        }
+        if("threshold" %in% names(data) && length(unique(data$threshold))>1){
+            stop("Cannot handle multple thresholds")
+        }
+        if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
+            stop("Cannot handle multple endpoints")
+        }
+        dtW.gg <- data[Hprojection == 1 & iFile %in% Ufile[file],.(n,method,estimate)]
+        if(is.numeric(dtW.gg$n)){
+            max.n <- max(dtW.gg$n)
+        }else if(is.factor(dtW.gg$n)){
+            max.n <- tail(levels(dtW.gg$n),1)
+        }
+        dtW.gg[, expected := mean(.SD[n==max.n & method == "GS",estimate])]
+        dtW.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
+        dtW.gg[, n := factor(n, levels = sort(unique(n)))]    
+        dtW.gg[, sample.size := factor(paste0("sample size = ",n), paste0("sample size = ",unique(n)))]
+    }else if(type.data == "processed"){
+        dtW.gg <- data
+    }
 
     gg <- ggplot(dtW.gg, aes(y = estimate - expected))
     gg <- gg + facet_wrap(~sample.size)
@@ -133,26 +153,32 @@ ggBias <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size = 2
 }
 
 ## * ggSe
-ggSe <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
-    Ufile <- unique(data$iFile)
-    if(is.null(file)){
-        file <- 1:length(Ufile)
-    }else  if(any(file %in% 1:length(Ufile) == FALSE)){
-        stop("unknown file selected \n")
-    }
-    if("threshold" %in% names(data) && length(unique(data$threshold))>1){
-        stop("Cannot handle multple thresholds")
-    }
-    if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
-        stop("Cannot handle multple endpoints")
-    }
+ggSe <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
+    type.data <- match.arg(type.data, c("raw","processed"))
 
-    dtW.gg <- data[iFile %in% Ufile[file],.(n,method,Hprojection,se,estimate)]
-    dtS.gg <- dtW.gg[,.(model = mean(se), empirical = sd(estimate)),by = c("n","method","Hprojection")]
-    dtS.gg[, n := factor(n, levels = sort(unique(n)))]
-    dtS.gg[, method2 := paste0(method," H",Hprojection)]
-    dtS.gg[, Hprojection := factor(Hprojection, levels = 1:2, labels = c("1st order H-projection","2nd order H-projection"))]
-    dtS.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
+    if(type.data == "raw"){
+        Ufile <- unique(data$iFile)
+        if(is.null(file)){
+            file <- 1:length(Ufile)
+        }else  if(any(file %in% 1:length(Ufile) == FALSE)){
+            stop("unknown file selected \n")
+        }
+        if("threshold" %in% names(data) && length(unique(data$threshold))>1){
+            stop("Cannot handle multple thresholds")
+        }
+        if("endpoint" %in% names(data) && length(unique(data$endpoint))>1){
+            stop("Cannot handle multple endpoints")
+        }
+
+        dtW.gg <- data[iFile %in% Ufile[file],.(n,method,Hprojection,se,estimate)]
+        dtS.gg <- dtW.gg[,.(rep = .N, model = mean(se), empirical = sd(estimate)),by = c("n","method","Hprojection")]
+        dtS.gg[, n := factor(n, levels = sort(unique(n)))]
+        dtS.gg[, method2 := paste0(method," H",Hprojection)]
+        dtS.gg[, Hprojection := factor(Hprojection, levels = 1:2, labels = c("1st order H-projection","2nd order H-projection"))]
+        dtS.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
+    }else if(type.data == "processed"){
+        dtS.gg <- data
+    }
     
     gg <- ggplot(dtS.gg, aes(x = empirical, y = model, group = Hprojection, color = n))
     gg <- gg + geom_abline(slope = 1)
@@ -171,55 +197,65 @@ ggSe <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size = 20)
 }
 
 ## * ggCoverage
-ggCoverage <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
+ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
     require(ggthemes)
+    type.data <- match.arg(type.data, c("raw","processed"))
     
-    Ufile <- unique(data$iFile)
-    if(is.null(file)){
-        file <- 1:length(Ufile)
-    }else  if(any(file %in% 1:length(Ufile) == FALSE)){
-        stop("unknown file selected \n")
-    }
-
-    keep.cols <- c("n", "method", "Hprojection", "threshold", "endpoint", "estimate", "lower.ci", "upper.ci")
-    keep.cols <- keep.cols[keep.cols %in% names(data)]
-
-    test.by <- sapply(c("threshold","endpoint","Hprojection"), function(iBy){
-        length(unique(data[[iBy]]))>1
-    })
-    if(sum(test.by)>1){
-        stop("Only one of \"threshold\", \"endpoint\", and \"Hprojection\" can vary \n")
-    }
-    if(sum(test.by)>0){
-        by <- names(test.by)[which(test.by)]
-    }else{
-        by <- NULL
-    }
-    
-    dtW.gg <- data[iFile %in% Ufile[file],.SD,.SDcols = keep.cols]
-    if(is.null(expected)){
-        dtW.gg[, expected := mean(.SD[n==max(n) & method == "GS",estimate]), by = by]
-    }else{
-        Uby <- unique(dtW.gg[[by]])
-        n.by <- length(Uby)
-        for(iby in 1:n.by){
-            dtW.gg[dtW.gg[[by]] == Uby[iby], expected := expected[iby]]
+    if(type.data == "raw"){
+        Ufile <- unique(data$iFile)
+        if(is.null(file)){
+            file <- 1:length(Ufile)
+        }else  if(any(file %in% 1:length(Ufile) == FALSE)){
+            stop("unknown file selected \n")
         }
-    }
-    dtW.gg[, coverage := (lower.ci < expected)*(upper.ci > expected)]
-    dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage)), by = c("n","method","Hprojection",by)]
-    
-    dtS.gg[, n := factor(n, levels = sort(unique(n)))]
-    dtS.gg[, method2 := paste0(method," H",Hprojection)]
-    dtS.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
-    if(identical(by,"Hprojection")){
-        dtS.gg[, Hprojection := factor(Hprojection, levels = 1:2, labels = c("1st order H-projection","2nd order H-projection"))]
-    }else if(identical(by,"threshold")){
-        dtS.gg[, threshold := paste0("\u03C4=", threshold)]
-    }else if(identical(by,"endpoint")){
 
-    }
+        keep.cols <- c("n", "method", "Hprojection", "threshold", "endpoint", "estimate", "lower.ci", "upper.ci")
+        keep.cols <- keep.cols[keep.cols %in% names(data)]
+
+        test.by <- sapply(c("threshold","endpoint","Hprojection"), function(iBy){
+            length(unique(data[[iBy]]))>1
+        })
+        if(sum(test.by)>1){
+            stop("Only one of \"threshold\", \"endpoint\", and \"Hprojection\" can vary \n")
+        }
+        if(sum(test.by)>0){
+            by <- names(test.by)[which(test.by)]
+        }else{
+            by <- NULL
+        }
     
+        dtW.gg <- data[iFile %in% Ufile[file],.SD,.SDcols = keep.cols]
+        if(is.null(expected)){
+            if(is.numeric(dtW.gg$n)){
+                max.n <- max(dtW.gg$n)
+            }else if(is.factor(dtW.gg$n)){
+                max.n <- tail(levels(dtW.gg$n),1)
+            }
+            dtW.gg[, expected := mean(.SD[n==max.n & method == "GS",estimate]), by = by]
+        }else{
+            Uby <- unique(dtW.gg[[by]])
+            n.by <- length(Uby)
+            for(iby in 1:n.by){
+                dtW.gg[dtW.gg[[by]] == Uby[iby], expected := expected[iby]]
+            }
+        }
+        dtW.gg[, coverage := (lower.ci < expected)*(upper.ci > expected)]
+        dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage)), by = c("n","method","Hprojection",by)]
+    
+        dtS.gg[, n := factor(n, levels = sort(unique(n)))]
+        dtS.gg[, method2 := paste0(method," H",Hprojection)]
+        dtS.gg[, scoring.rule := factor(method, levels = c("GS","Gehan","Peron"), labels = c("no censoring","Gehan's scoring rule","Peron's scoring rule"))]
+        if(identical(by,"Hprojection")){
+            dtS.gg[, Hprojection := factor(Hprojection, levels = 1:2, labels = c("1st order H-projection","2nd order H-projection"))]
+        }else if(identical(by,"threshold")){
+            dtS.gg[, threshold := paste0("\u03C4=", threshold)]
+        }else if(identical(by,"endpoint")){
+
+        }
+    }else if(type.data == "processed"){
+        dtS.gg <- data
+    }
+
     gg <- ggplot(dtS.gg, aes(x = n, y = coverage, group = scoring.rule, color = scoring.rule))
     gg <- gg + geom_hline(yintercept = 0.95, color = "red", size = 1.5)
     gg <- gg + geom_point(size = 2) + geom_line(size = 1.5)
@@ -241,84 +277,107 @@ ggCoverage <- function(data, file = NULL, plot = TRUE, expected = NULL, txt.size
 }
 
 ## * createTable
-createTable <- function(data, file = NULL, expected = NULL,
+createTable <- function(data, by, type.data = "raw", file = NULL, expected = NULL,
                         print = TRUE, digits = NULL,
                         label = "", caption = "", trace = TRUE){
     require(xtable)
+    type.data <- match.arg(type.data, c("raw","processed"))
 
-    ## ** select data
-    Ufile <- unique(data$iFile)
-    if(is.null(file)){
-        file <- 1:length(Ufile)
-    }else  if(any(file %in% 1:length(Ufile) == FALSE)){
-        stop("unknown file selected \n")
-    }
-    dt.table <- data[iFile %in% Ufile[file],.(n,method, Hprojection, threshold,
-                                              estimate, se, lower.ci, upper.ci,
-                                              timeEstimate, timeAll)]
-    if(is.null(expected)){
-        dt.table[, expected := mean(.SD[n==max(n) & method == "GS",estimate]), by = "threshold"]
-    }else{
-        Uthreshold <- unique(dt.table$threshold)
-        n.threshold <- length(Uthreshold)
-        for(iTh in 1:n.threshold)
-            dt.table[threshold == Uthreshold[iTh], expected := expected[iTh]]
-    }
+    if(type.data == "raw"){
+        ## ** select data
+        Ufile <- unique(data$iFile)
+        if(is.null(file)){
+            file <- 1:length(Ufile)
+        }else  if(any(file %in% 1:length(Ufile) == FALSE)){
+            stop("unknown file selected \n")
+        }
+        keep.col <- c("n", "method", "Hprojection", by, "estimate", "se", "lower.ci", "upper.ci", "timeEstimate", "timeAll")
+        dt.table <- data[iFile %in% Ufile[file], .SD, .SDcols = keep.col]
+        if(is.null(expected)){
+            if(is.numeric(dt.table$n)){
+                max.n <- max(dt.table$n)
+            }else if(is.factor(dt.table$n)){
+                max.n <- tail(levels(droplevels(dt.table$n)),1)
+            }
+            dt.table[, expected := mean(.SD[n==max.n & method == "GS",estimate]), by = by]
+        }else{
+            Uby <- unique(dt.table[[by]])
+            n.by <- length(Uby)
+            for(iBy in 1:n.by)
+                dt.table[dt.table[[by]] == Uby[iBy], expected := expected[iTh]]
+        }
 
 
-    ## ** summarize
-    dt.table[, coverage := (lower.ci < expected)*(upper.ci>expected)]
-    byVar <- c("n"[length(unique(dt.table$n))>1],
-               "Hprojection"[length(unique(dt.table$Hprojection))>1],
-               "threshold"[length(unique(dt.table$threshold))>1],
-               "method"[length(unique(dt.table$method))>1]
-               )
-    if("Hprojection" %in% byVar){stop("Cannot handle several Hprojections")}
-    dtS.table <- dt.table[, .(rep = .N,
-                              bias = mean(estimate - expected),
-                              empirical= sd(estimate),
-                              estimated= mean(se),
-                              coverage =  mean(coverage)),
-                          by = byVar]
+        ## ** summarize
+        dt.table[, coverage := (lower.ci < expected)*(upper.ci>expected)]
+        byVar <- c("n"[length(unique(dt.table$n))>1],
+                   "Hprojection"[length(unique(dt.table$Hprojection))>1],
+                   by[length(unique(dt.table[[by]]))>1],
+                   "method"[length(unique(dt.table$method))>1]
+                   )
+        if("Hprojection" %in% byVar){stop("Cannot handle several Hprojections")}
+        dtS.table <- dt.table[, .(rep = .N,
+                                  bias = mean(estimate - expected),
+                                  empirical= sd(estimate),
+                                  estimated= mean(se),
+                                  coverage =  mean(coverage)),
+                              by = byVar]
     
-    if(trace){cat("Number of repetitions: ",paste(unique(dtS.table$rep),collapse = " "),"\n")}
-    dtS.table[, rep := NULL]
+    }else if(type.data == "processed"){
+        dtS.table <- data.table::copy(data)
+    }
+    n.method <- length(unique(dtS.table$method))
 
     ## ** create table
-    setkeyv(dtS.table,c("n","threshold"))
-    dtS.table$threshold[duplicated(interaction(dtS.table$n,dtS.table$threshold))] <- ""
-    dtS.table$n <- paste0("\\(n=m=\\) ",dtS.table$n)
-    dtS.table$n[duplicated(dtS.table$n)] <- ""
+    dtSS.table <- copy(dtS.table)
+    if(trace){cat("Number of repetitions: ",paste(unique(dtSS.table$rep),collapse = " "),"\n")}
+    dtSS.table[, rep := NULL]
     
-    setnames(dtS.table, old = "n", new = "sample size")
+    setkeyv(dtSS.table,c("n",by))
 
-    setnames(dtS.table, old = "threshold", new = "\\(\\tau\\)")
-        dtS.table[, method := factor(method, levels = c("GS","Gehan","Peron"),
-                                 labels = c("Full data","Gehan", "Peron"))]
-    setnames(dtS.table, old = "method", new = "scoring rule")
-    setnames(dtS.table, old = "empirical", new = "empirical \\(\\sigma_{\\hat{\\Delta},\\hat{\\Delta}}\\)")
-    setnames(dtS.table, old = "estimated", new = "estimated \\(\\sigma_{\\hat{\\Delta},\\hat{\\Delta}}\\)")
+    dtSS.table[[by]] <- as.character(dtSS.table[[by]])
+    dtSS.table[duplicated(interaction(dtSS.table$n,dtSS.table[[by]])), c(by) := ""]
+    dtSS.table$n <- paste0("\\(n=m=\\) ",dtSS.table$n)
+    dtSS.table$n[duplicated(dtSS.table$n)] <- ""
+    
+    setnames(dtSS.table, old = "n", new = "sample size")
 
-    out <- xtable(dtS.table, type = "latex", 
+    if(by=="threshold"){
+        setnames(dtSS.table, old = "threshold", new = "\\(\\tau\\)")
+    }
+    dtSS.table[, method := factor(method, levels = c("GS","Gehan","Peron"),
+                                  labels = c("Full data","Gehan", "Peron"))]
+    setnames(dtSS.table, old = "method", new = "scoring rule")
+
+    dtSS.table[, bias := format.pval(bias, digits = digits, eps = 10^(-digits))]
+    dtSS.table[, empirical := format.pval(empirical, digits = digits, eps = 10^(-digits))]
+    dtSS.table[, estimated := format.pval(estimated, digits = digits, eps = 10^(-digits))]
+    dtSS.table[, coverage := format.pval(coverage, digits = digits, eps = 10^(-digits))]
+
+    setnames(dtSS.table, old = "empirical", new = "empirical \\(\\sigma_{\\hat{\\Delta},\\hat{\\Delta}}\\)")
+    setnames(dtSS.table, old = "estimated", new = "estimated \\(\\sigma_{\\hat{\\Delta},\\hat{\\Delta}}\\)")
+
+    out <- xtable(dtSS.table, type = "latex", 
                   label = label,
-                  caption = caption,
-                  digits = digits)
+                  caption = caption)
 
-
-    n.method <- length(unique(dt.table$method))
     addtorow <- list()
-    addtorow$pos <- as.list(seq(from = n.method, to = NROW(dtS.table), by=n.method))
+    addtorow$pos <- as.list(seq(from = n.method, to = NROW(dtSS.table), by=n.method))
     addtorow$command <- rep(c(rep("[2mm]", times = n.method-1),"[4mm]"),
                             times = length(addtorow$pos)/n.method)
 
     addtorow$pos <- addtorow$pos[-length(addtorow$pos)]
     addtorow$command <- addtorow$command[-length(addtorow$command)]
-    
-    if(print){ print(out, add.to.row = addtorow, include.rownames=FALSE, include.colnames = TRUE,
-                     sanitize.colnames.function = identity,
-                     sanitize.text.function = identity,
-                     table.placement = "!h")}
-    return(invisible(out))
+
+    mytable <- sapply(capture.output(print(out, add.to.row = addtorow, include.rownames=FALSE, include.colnames = TRUE,
+                                    sanitize.colnames.function = identity,
+                                    sanitize.text.function = identity,
+                                    table.placement = "!h")), paste0, "\n")
+    if(print){cat(mytable) }
+
+    ## ** export 
+    return(invisible(list(table = mytable,
+                          data = dtS.table)))
 }
 
 ######################################################################
