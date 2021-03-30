@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 17 2018 (09:40) 
 ## Version: 
-## Last-Updated: jun 12 2020 (16:08) 
+## Last-Updated: mar 30 2021 (15:23) 
 ##           By: Brice Ozenne
-##     Update #: 124
+##     Update #: 175
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -14,155 +14,117 @@
 ##----------------------------------------------------------------------
 ## 
 ### Code:
-
 ## * path
+## path <- "P:/Cluster/GPC/Article-inference-Ustatistic-Rao"
+## setwd(path)
+
+path.results <- "Results"
+path.datasim <- do.call(rbind,
+                        list(H0_1TTE = data.frame(folder = "SIMULATION_H0-1TTE", n = FALSE, endpoint = FALSE,
+                                                  text = "balanced groups under the null with 1 TTE"), 
+                             H1_1TTE = data.frame(folder = "SIMULATION_H1-1TTE", n = FALSE, endpoint = FALSE,
+                                                  text = "balanced groups under the alternative with 1 TTE"), 
+                             H0_mE = data.frame(folder = "SIMULATION_H0-mE", n = FALSE, endpoint = TRUE,
+                                                text = "balanced groups under the null with multiple TTE"), 
+                             H1_mE = data.frame(folder = "SIMULATION_H1-mE", n = FALSE, endpoint = TRUE,
+                                                text = "balanced groups under the alternative with multiple TTE"), 
+                             H0_1TTE_nm = data.frame(folder = "SIMULATION_H0-1TTE-nm", n = TRUE, endpoint = FALSE,
+                                                     text = "unbalanced groups under the null with 1 TTE"), 
+                             H1_1TTE_nm = data.frame(folder = "SIMULATION_H1-1TTE-nm", n = TRUE, endpoint = FALSE,
+                                                     text = "unbalanced groups under the alternative with 1 TTE"), 
+                             H0_mE_nm = data.frame(folder = "SIMULATION_H0-mE-nm", n = TRUE, endpoint = TRUE,
+                                                   text = "unbalanced groups under the null with multiple TTE"),
+                             H1_mE_nm = data.frame(folder = "SIMULATION_H1-mE-nm", n = TRUE, endpoint = TRUE,
+                                                   text = "unbalanced groups under the alternative with multiple TTE")
+                             )
+                        )
+
+## * libraries
 library(data.table)
 library(ggplot2)
-path <- "P:/Cluster/GPC/Article-inference-Ustatistic"
-setwd(path)
+library(ggpubr) ## neededed for graphical display
+library(ggthemes) ## neededed for graphical display
+library(xtable) ## neededed for display
 source("FCT-gg.R")
 
-path.results <- file.path(path,"Results")
 
-path.coverageH0_1TTE <- file.path(path.results,"CoverageH0-1TTE")
-path.coverageH1_1TTE  <- file.path(path.results,"CoverageH1-1TTE")
-path.coverageH0_mE <- file.path(path.results,"CoverageH0-mE")
-path.coverageH1_mE  <- file.path(path.results,"CoverageH1-mE")
+## * Loop
+n.datasim <- NROW(path.datasim)
+for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
+    iPath <- file.path(path.results, path.datasim[iDatasim,"folder"])
 
+    if(length(list.files(iPath))==0){next}
+    cat(iDatasim,") ", path.datasim[iDatasim,"text"],"\n",sep="")
 
-## * Coverage under the null (1 TTE)
-cat("\n Coverage under the null (1 TTE) \n")
-## ** load
-dt.H0_1TTE <- butils::sinkDirectory(path.coverageH0_1TTE, string.keep = "tempo")
-dt.H0_1TTE[, endpoint := NULL]
+    ## ** load data
+    iDT <- butils::sinkDirectory(iPath, string.keep = "tempo") ## , string.exclude = paste(c(2:9,0),collapse="|") 
+    ## iDT <- butils::sinkDirectory(iPath, string.keep = "tempo", string.exclude = paste(c(2:9,0),collapse="|")) 
 
-## ** display
-ggTiming.H0_1TTE <- ggTiming(dt.H0_1TTE[threshold==0], file = 1)
-ggBias.H0_1TTE  <- ggBias(dt.H0_1TTE[threshold==0.5])
-ggSe.H0_1TTE  <- ggSe(dt.H0_1TTE[threshold==0])
-ggCoverage.H0_1TTE  <- ggCoverage(dt.H0_1TTE[Hprojection==1 & threshold <= 0.5])
-## ggCoverage.H0_1TTE$data
-tableH0_1TTE  <- paste0(capture.output(
-    createTable(dt.H0_1TTE[n %in% c(30,120,600) & Hprojection==1 & threshold <= 0.5],
-                digits = 3)
-), collapse = "\n")
-cat(tableH0_1TTE)
-
-## Hprojection effect
-dt.H0_1TTE[threshold == 0.5 & method == "Gehan", .(sigma_empirical = sd(estimate),sigma_Ustat = mean(se)), by = c("Hprojection","n")]
-
-## ** export
-ggsave(ggTiming.H0_1TTE$plot, filename = file.path(path.results,"fig-timing-H0-1TTE.pdf"),
-       width = 10, height = 9, device = cairo_pdf)
-ggsave(ggBias.H0_1TTE$plot, filename = file.path(path.results,"fig-bias-H0-1TTE.pdf"),
-       device = cairo_pdf)
-ggsave(ggSe.H0_1TTE$plot, filename = file.path(path.results,"fig-se-H0-1TTE.pdf"),
-       device = cairo_pdf)
-ggsave(ggCoverage.H0_1TTE$plot + coord_cartesian(ylim = c(0.9,1)),
-       filename = file.path(path.results,"fig-coverage-H0-1TTE.pdf"),
-       height = 7, width = 10, device = cairo_pdf)
-sink(file.path(path.results,"table-H0-1TTE.txt"))
-cat(tableH0_1TTE)
-sink()
-saveRDS(dt.H0_1TTE, file = file.path(path.results,"dataCoverage.H0_1TTE.rds"))
-
-## * Coverage under the alternative (1 TTE)
-cat("\n Coverage under the alternative (1 TTE) \n")
-## ** load
-dt.H1_1TTE <- butils::sinkDirectory(path.coverageH1_1TTE, string.keep = "tempo")
-dt.H1_1TTE[, endpoint := gsub("timeU","time",endpoint)]
-## dt.H1_1TTE[n==400,.("all"= median(timeAll),"estimate"=mean(timeEstimate)),
-## by = c("threshold","n","Hprojection","method")]
-## dt.H1_1TTE <- readRDS(file = file.path(path.results,"dataCoverage.H1_1TTE.rds"))
-dt.H1_1TTE[, endpoint := NULL]
-
-## ** display
-ggTiming.H1_1TTE <- ggTiming(dt.H1_1TTE[threshold==0], file = 1)
-ggBias.H1_1TTE  <- ggBias(dt.H1_1TTE[threshold==0.5])
-ggSe.H1_1TTE  <- ggSe(dt.H1_1TTE[threshold==0])
-ggCoverage.H1_1TTE  <- ggCoverage(dt.H1_1TTE[Hprojection==1 & threshold <= 0.5])
-tableH1_1TTE  <- paste0(capture.output(
-    createTable(dt.H1_1TTE[n %in% c(30,120,600) & Hprojection==1 & threshold <= 0.5],
-                digits = 3)
-), collapse = "\n")
-cat(tableH1_1TTE)
+    ## ** process data
+    ## n
+    if(path.datasim[iDatasim,"n"]){
+        iDT[, n := factor(paste0(n.T,"/",n.C), unique(paste0(n.T,"/",n.C)))]
+    }
+    keep.level.n <- sort(unique(iDT$n))[c(1,3,6)]
     
-## ** export
-ggsave(ggTiming.H1_1TTE$plot, filename = file.path(path.results,"fig-timing-H1-1TTE.pdf"),
-       width = 10, height = 9, device = cairo_pdf)
-ggsave(ggBias.H1_1TTE$plot, filename = file.path(path.results,"fig-bias-H1-1TTE.pdf"),
-       device = cairo_pdf)
-ggsave(ggSe.H1_1TTE$plot, filename = file.path(path.results,"fig-se-H1-1TTE.pdf"),
-       device = cairo_pdf)
-ggsave(ggCoverage.H1_1TTE$plot + coord_cartesian(ylim = c(0.9,1)),
-       filename = file.path(path.results,"fig-coverage-H1-1TTE.pdf"),
-       height = 7, width = 10, device = cairo_pdf)
-sink(file.path(path.results,"table-H1-1TTE.txt"))
-cat(tableH1_1TTE)
-sink()
-saveRDS(dt.H1_1TTE, file = file.path(path.results,"dataCoverage.H1_1TTE.rds"))
+    ## endpoint
+    if(path.datasim[iDatasim,"endpoint"]){
+        iDT[, endpoint := droplevels(factor(endpoint,
+                                            levels = c("time_0.5", "timeU_0.5", "toxicity_0.5", "time_1e-12", "timeU_1e-12"),
+                                            labels = c("1 endpoint", "1 endpoint", "2 endpoints", "3 endpoints", "3 endpoints")))]
+        iDT.bias <- iDT[endpoint=="3 endpoints"]
+    }else{
+        iDT[, endpoint := NULL]
+        iDT.bias <- iDT[threshold==0.5]
+    }
 
+    ## ** generate data for plot and tables
+    iGGtiming <- ggTiming(iDT.bias, file = 1, type.data = "raw", plot = FALSE)
+    iGGbias  <- ggBias(iDT.bias, file = 1, type.data = "raw", plot = FALSE)
+    iGGse  <- ggSe(iDT.bias, type.data = "raw", plot = FALSE)
+    iGGcoverage  <- ggCoverage(iDT[Hprojection==1], type.data = "raw", plot = FALSE)
+    iTable  <- createTable(iDT[n %in% keep.level.n & Hprojection==1], digits = 3, print = FALSE, trace = FALSE,
+                           by = if(path.datasim[iDatasim,"endpoint"]){"endpoint"}else{"threshold"})
 
-## * Coverage under the null (multiple TTE)
-cat("\n Coverage under the null (multiple TTE) \n")
+    iProj <- dcast(iDT.bias[method == "Gehan", .(rep = .N, sigma_empirical = sd(estimate),sigma_Ustat = mean(se)),
+                            by = c("Hprojection","n")],
+                   value.var = "sigma_Ustat",
+                   formula = n + rep + sigma_empirical ~ Hprojection)
 
-## ** load
-dt.H0_mE <- butils::sinkDirectory(path.coverageH0_mE, string.keep = "tempo")
-dt.H0_mE[, endpoint := gsub("timeU","time",endpoint)]
-dt.H0_mE[, endpoint := factor(endpoint,
-                              levels = c("time_0.5", "toxicity_0.5", "time_1e-12"),
-                              labels = c("1 endpoint", "2 endpoints", "3 endpoints"))]
+    ## ** export
+    iName.timing <- file.path(path.results,paste0("figTiming-",path.datasim[iDatasim,"folder"],".pdf"))
+    iTest <- try(ggsave(iGGtiming$plot, filename = iName.timing, width = 10, height = 9, device = cairo_pdf), silent = TRUE)
+    if(inherits(iTest, "try-error")){file.remove(iName.timing)}
 
-## ** display
-ggTiming.H0_mE <- ggTiming(dt.H0_mE[endpoint=="3 endpoints"], file = 3)
-ggBias.H0_mE  <- ggBias(dt.H0_mE[endpoint=="3 endpoints"])
-ggSe.H0_mE  <- ggSe(dt.H0_mE[endpoint=="3 endpoints"])
-ggCoverage.H0_mE  <- ggCoverage(dt.H0_mE[Hprojection==1])
-## ggCoverage.H0_mE$data$rep
+    iName.bias <- file.path(path.results,paste0("figBias-",path.datasim[iDatasim,"folder"],".pdf"))
+    iTest <- try(ggsave(iGGbias$plot, filename = iName.bias, device = cairo_pdf), silent = TRUE)
+    if(inherits(iTest, "try-error")){file.remove(iName.bias)}
 
-## ** export
-ggsave(ggTiming.H0_mE$plot, filename = file.path(path.results,"fig-timing-H0-mE.pdf"),
-       width = 10, height = 9, device = cairo_pdf)
-ggsave(ggBias.H0_mE$plot, filename = file.path(path.results,"fig-bias-H0-mE.pdf"),
-       device = cairo_pdf)
-ggsave(ggSe.H0_mE$plot, filename = file.path(path.results,"fig-se-H0-mE.pdf"),
-       device = cairo_pdf)
-ggsave(ggCoverage.H0_mE$plot + coord_cartesian(ylim = c(0.9,1)),
-       filename = file.path(path.results,"fig-coverage-H0-mE.pdf"),
-       height = 7, width = 10, device = cairo_pdf)
-saveRDS(dt.H0_mE, file = file.path(path.results,"dataCoverage.H0_mE.rds"))
+    iName.se <- file.path(path.results,paste0("figSe-",path.datasim[iDatasim,"folder"],".pdf"))
+    try(ggsave(iGGse$plot, filename = iName.se, device = cairo_pdf), silent = TRUE)
+    if(inherits(iTest, "try-error")){file.remove(iName.se)}
 
+    iName.coverage <- file.path(path.results,paste0("figCoverage-",path.datasim[iDatasim,"folder"],".pdf"))
+    try(ggsave(iGGcoverage$plot + coord_cartesian(ylim = c(0.9,1)), filename = iName.coverage,
+           height = 7, width = 10, device = cairo_pdf), silent = TRUE)
+    if(inherits(iTest, "try-error")){file.remove(iName.coverage)}
 
-## * Coverage under the alternative (multiple TTE)
-cat("\n Coverage under the alternative (multiple TTE) \n")
+    fileConn <- file(file.path(path.results,paste0("table-",path.datasim[iDatasim,"folder"],".txt")))
+    writeLines(iTable$table, fileConn)
+    close(fileConn)
 
-## ** load
-dt.H1_mE <- butils::sinkDirectory(path.coverageH1_mE, string.keep = "tempo")
-dt.H1_mE[, endpoint := factor(endpoint,
-                              levels = c("time_0.5", "timeU_0.5", "toxicity_0.5", "time_1e-12", "timeU_1e-12"),
-                              labels = c("1 endpoint", "1 endpoint", "2 endpoints", "3 endpoints", "3 endpoints"))]
-## dt.H1_me <- readRDS(file.path(path.results,"dataCoverage.H1_mE.rds"))
-## dt.H1_mE[, endpoint := factor(endpoint,
-##                               levels = c("survival (\u03C4=0.5)", "toxicity", "survival"),
-##                               labels = c("1 endpoint", "2 endpoints", "3 endpoints"))]
+    fileConn <- file(file.path(path.results,paste0("tableHproj-",path.datasim[iDatasim,"folder"],".txt")))
+    writeLines(capture.output(iProj), fileConn)
+    close(fileConn)
 
-## ** display
-ggTiming.H1_mE <- ggTiming(dt.H1_mE[endpoint=="3 endpoints"], file = 1)
-ggBias.H1_mE  <- ggBias(dt.H1_mE[endpoint=="3 endpoints"])
-ggSe.H1_mE  <- ggSe(dt.H1_mE[endpoint=="3 endpoints"])
-ggCoverage.H1_mE  <- ggCoverage(dt.H1_mE[Hprojection==1])
+    saveRDS(iDT, file = file.path(path.results,"raw",paste0("data-",path.datasim[iDatasim,"folder"],".rds")))
+    saveRDS(iGGtiming$data, file = file.path(path.results,paste0("dataTiming-",path.datasim[iDatasim,"folder"],".rds")))
+    saveRDS(iGGcoverage$data, file = file.path(path.results,paste0("dataCoverage-",path.datasim[iDatasim,"folder"],".rds")))
+    saveRDS(iTable$data, file = file.path(path.results,paste0("dataTable-",path.datasim[iDatasim,"folder"],".rds")))
+    saveRDS(iProj, file = file.path(path.results,paste0("dataProj-",path.datasim[iDatasim,"folder"],".rds")))
+}
 
-## ** export
-ggsave(ggTiming.H1_mE$plot, filename = file.path(path.results,"fig-timing-H1-mE.pdf"),
-       width = 10, height = 9, device = cairo_pdf)
-ggsave(ggBias.H1_mE$plot, filename = file.path(path.results,"fig-bias-H1-mE.pdf"),
-       device = cairo_pdf)
-ggsave(ggSe.H1_mE$plot, filename = file.path(path.results,"fig-se-H1-mE.pdf"),
-       device = cairo_pdf)
-ggsave(ggCoverage.H1_mE$plot + coord_cartesian(ylim = c(0.9,1)),
-       filename = file.path(path.results,"fig-coverage-H1-mE.pdf"),
-       height = 7, width = 10, device = cairo_pdf)
-saveRDS(dt.H1_mE, file = file.path(path.results,"dataCoverage.H1_mE.rds"))
 
 ######################################################################
 ### BUILD_results.R ends here
+

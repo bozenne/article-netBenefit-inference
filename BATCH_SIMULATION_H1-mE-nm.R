@@ -1,42 +1,53 @@
-# path <- "p:/Cluster/GPC/Article-inference-Ustatistic/"
-# setwd(path)
-# source("BATCH_CoverageH0-1TTE.R")
+## * Header 
+## path <- "p:/Cluster/GPC/Article-inference-Ustatistic - Rao/"
+## setwd(path)
+## source("BATCH_SIMULATION-H1-mE-nm.R")
+## sbatch -a 1-10 -J 'mytest' --output=/dev/null --error=/dev/null R CMD BATCH --vanilla BATCH_SIMULATION-H1-mE-nm.R /dev/null 
 
 rm(list = ls())
 gc()
 
 ## * seed
-iter_sim <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-n.iter_sim <- as.numeric(Sys.getenv("SGE_TASK_LAST"))
+iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+n.iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_COUNT"))
 if(is.na(iter_sim)){iter_sim <- 1}
 if(is.na(n.iter_sim)){n.iter_sim <- 40}
 cat("iteration ",iter_sim," over ",n.iter_sim,"\n",sep="")
 
-iSeed <- iter_sim
+set.seed(1)
+seqSeed <- sample(1:max(1e5,n.iter_sim),
+                  size=n.iter_sim,replace=FALSE)
+iSeed <- seqSeed[iter_sim]
 set.seed(iSeed)
 
 cat("seed: ",iSeed,"\n")
 
 ## * path
 path <- "."
-path.res <- file.path(path,"Results","CoverageH0-1TTE")
+path.res <- file.path(path,"Results","H1-mE-nm")
 if(dir.exists(path.res)==FALSE){
+    if(dir.exists(file.path(path,"Results"))==FALSE){
+        dir.create(file.path(path,"Results"))
+    }
     dir.create(path.res)
 }
-path.output <- file.path(path,"output","CoverageH0-1TTE")
+path.output <- file.path(path,"output","H1-mE-nm")
 if(dir.exists(path.output)==FALSE){
+    if(dir.exists(file.path(path,"output"))==FALSE){
+        dir.create(file.path(path,"output"))
+    }
     dir.create(path.output)
 }
 
 ## * libraries
 library(BuyseTest)
+data.table::setDTthreads(1)
 library(data.table)
 
 ## * settings
 n.sim <- 500
 seqN <- c(30,60,120,240,400,600,1000)
 BuyseTest.options(trace = 0, debug = 0)
-threshold <- c(0,0.25,0.5)
 
 ## * job
 res <- NULL
@@ -45,8 +56,13 @@ for(iN in 1:length(seqN)){ ## iN <- 5
     for(iSim in 1:n.sim){ ## iSim <- 1
         cat(iSim," ")
         ## ** sim data
-        dt <- simBuyseTest(seqN[iN],
-                           argsTTE = list(scale.T = 1,
+        iN.T <- seqN[iN]*2/4
+        iN.C <- seqN[iN]*2*3/4
+        dt <- simBuyseTest(n.T = iN.T,
+                           n.C = iN.C,
+                           argsBin = list(p.T = c(0.8,0.2),
+                                          p.C = c(0.2,0.8)),
+                           argsTTE = list(scale.T = 2,
                                           scale.C = 1,
                                           scale.Censoring.C = 1,
                                           scale.Censoring.T = 1),
@@ -56,9 +72,8 @@ for(iN in 1:length(seqN)){ ## iN <- 5
         dt[,eventtimeCensoring:=NULL]
         setnames(dt, old = c("eventtimeUncensored","eventtime"), new = c("timeU","time"))
 
-        for(iT in 1:length(threshold)){ ## iT <- 1
-        ff.GS <- as.formula(paste0("treatment ~ ", paste(paste0("tte(timeU, status = One, threshold = ",threshold[iT],")"),collapse=" + ")))
-        ff.test <- as.formula(paste0("treatment ~ ", paste(paste0("tte(time, status = status, threshold = ",threshold[iT],")"),collapse=" + ")))
+        ff.GS <- treatment ~ tte(timeU, status = One, threshold = 0.5) + bin(toxicity) + tte(timeU, status = One, threshold = 0)
+        ff.test <- treatment ~ tte(time, status = status, threshold = 0.5) + bin(toxicity) + tte(time, status = status, threshold = 0)
 
         ## ** fit model
         BuyseTest.options(order.Hprojection = 2)
@@ -94,20 +109,19 @@ for(iN in 1:length(seqN)){ ## iN <- 5
         res <- rbind(res,
                      data.table(iOutGS1,
                                 timeAll = tps.GS["elapsed"], timeEstimate = tps.GS0["elapsed"],
-                                endpoint = rownames(iOutGS1), threshold = threshold[iT], n=seqN[iN], iter = iSim, Hprojection = 1, method = "GS"),
+                                endpoint = rownames(iOutGS1), N=iN.T+iN.C, n.T = iN.T, n.C = iN.C, iter = iSim, Hprojection = 1, method = "GS"),
                      data.table(iOutGS2,
                                 timeAll = tps.GS["elapsed"], timeEstimate = tps.GS0["elapsed"],
-                                endpoint = rownames(iOutGS2), threshold = threshold[iT], n=seqN[iN], iter = iSim, Hprojection = 2, method = "GS"),
+                                endpoint = rownames(iOutGS2), N=iN.T+iN.C, n.T = iN.T, n.C = iN.C, iter = iSim, Hprojection = 2, method = "GS"),
                      data.table(iOutGehan1,
                                 timeAll = tps.Gehan["elapsed"], timeEstimate = tps.Gehan0["elapsed"],
-                                endpoint = rownames(iOutGehan1), threshold = threshold[iT], n=seqN[iN], iter = iSim, Hprojection = 1, method = "Gehan"),
+                                endpoint = rownames(iOutGehan1), N=iN.T+iN.C, n.T = iN.T, n.C = iN.C, iter = iSim, Hprojection = 1, method = "Gehan"),
                      data.table(iOutGehan2,
                                 timeAll = tps.Gehan["elapsed"], timeEstimate = tps.Gehan0["elapsed"],
-                                endpoint = rownames(iOutGehan2), threshold = threshold[iT], n=seqN[iN], iter = iSim, Hprojection = 2, method = "Gehan"),
+                                endpoint = rownames(iOutGehan2), N=iN.T+iN.C, n.T = iN.T, n.C = iN.C, iter = iSim, Hprojection = 2, method = "Gehan"),
                      data.table(iOutPeron1,
                                 timeAll = tps.Peron["elapsed"], timeEstimate = tps.Peron0["elapsed"],
-                                endpoint = rownames(iOutPeron1), threshold = threshold[iT], n=seqN[iN], iter = iSim, Hprojection = 1, method = "Peron"))
-        }
+                                endpoint = rownames(iOutPeron1), N=iN.T+iN.C, n.T = iN.T, n.C = iN.C, iter = iSim, Hprojection = 1, method = "Peron"))
     }
     cat("\n")
     saveRDS(res, file = file.path(path.res,paste0("simul_",iter_sim,"(tempo).rds")))
@@ -118,4 +132,5 @@ saveRDS(res, file = file.path(path.res,paste0("simul_",iter_sim,".rds")))
 
 ## * display
 print(sessionInfo())
+
 

@@ -1,35 +1,47 @@
-# path <- "p:/Cluster/GPC/Article-inference-Ustatistic/"
-# setwd(path)
-# source("BATCH_CoverageH0-mE.R")
+## * Header 
+## path <- "p:/Cluster/GPC/Article-inference-Ustatistic - Rao/"
+## setwd(path)
+## source("BATCH_SIMULATION-H1-mE.R")
+## sbatch -a 1-10 -J 'mytest' --output=/dev/null --error=/dev/null R CMD BATCH --vanilla BATCH_SIMULATION-H1-mE.R /dev/null 
 
 rm(list = ls())
 gc()
 
 ## * seed
-iter_sim <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-n.iter_sim <- as.numeric(Sys.getenv("SGE_TASK_LAST"))
+iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+n.iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_COUNT"))
 if(is.na(iter_sim)){iter_sim <- 1}
 if(is.na(n.iter_sim)){n.iter_sim <- 40}
 cat("iteration ",iter_sim," over ",n.iter_sim,"\n",sep="")
 
-iSeed <- iter_sim
+set.seed(1)
+seqSeed <- sample(1:max(1e5,n.iter_sim),
+                  size=n.iter_sim,replace=FALSE)
+iSeed <- seqSeed[iter_sim]
 set.seed(iSeed)
 
 cat("seed: ",iSeed,"\n")
 
 ## * path
 path <- "."
-path.res <- file.path(path,"Results","CoverageH0-mE")
+path.res <- file.path(path,"Results","H1-mE")
 if(dir.exists(path.res)==FALSE){
+    if(dir.exists(file.path(path,"Results"))==FALSE){
+        dir.create(file.path(path,"Results"))
+    }
     dir.create(path.res)
 }
-path.output <- file.path(path,"output","CoverageH0-mE")
+path.output <- file.path(path,"output","H1-mE")
 if(dir.exists(path.output)==FALSE){
+    if(dir.exists(file.path(path,"output"))==FALSE){
+        dir.create(file.path(path,"output"))
+    }
     dir.create(path.output)
 }
 
 ## * libraries
 library(BuyseTest)
+data.table::setDTthreads(1)
 library(data.table)
 
 ## * settings
@@ -44,10 +56,13 @@ for(iN in 1:length(seqN)){ ## iN <- 5
     for(iSim in 1:n.sim){ ## iSim <- 1
         cat(iSim," ")
         ## ** sim data
-        dt <- simBuyseTest(seqN[iN], argsTTE = list(scale.T = 1,
-                                                    scale.C = 1,
-                                                    scale.Censoring.C = 1,
-                                                    scale.Censoring.T = 1),
+        dt <- simBuyseTest(seqN[iN],
+                           argsBin = list(p.T = c(0.8,0.2),
+                                          p.C = c(0.2,0.8)),
+                           argsTTE = list(scale.T = 2,
+                                          scale.C = 1,
+                                          scale.Censoring.C = 1,
+                                          scale.Censoring.T = 1),
                            latent = TRUE)
 
         dt$One <- 1

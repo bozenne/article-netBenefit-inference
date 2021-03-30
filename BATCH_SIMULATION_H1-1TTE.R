@@ -1,19 +1,22 @@
-# path <- "p:/Cluster/GPC/Article-inference-Ustatistic/"
-# setwd(path)
-# source("BATCH_CoverageH1-1TTE.R")
+## * Header 
+## path <- "p:/Cluster/GPC/Article-inference-Ustatistic - Rao/"
+## setwd(path)
+## source("BATCH_SIMULATION-H1-1TTE.R")
+## sbatch -a 1-10 -J 'mytest' --output=/dev/null --error=/dev/null R CMD BATCH --vanilla BATCH_SIMULATION-H1-1TTE.R /dev/null 
 
 rm(list = ls())
 gc()
 
 ## * seed
-iter_sim <- as.numeric(Sys.getenv("SGE_TASK_ID"))
-n.iter_sim <- as.numeric(Sys.getenv("SGE_TASK_LAST"))
+iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+n.iter_sim <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_COUNT"))
 if(is.na(iter_sim)){iter_sim <- 1}
-if(is.na(n.iter_sim)){n.iter_sim <- 10}
+if(is.na(n.iter_sim)){n.iter_sim <- 40}
 cat("iteration ",iter_sim," over ",n.iter_sim,"\n",sep="")
 
 set.seed(1)
-seqSeed <- sample(1:max(1e5,n.iter_sim),size=n.iter_sim,replace=FALSE)
+seqSeed <- sample(1:max(1e5,n.iter_sim),
+                  size=n.iter_sim,replace=FALSE)
 iSeed <- seqSeed[iter_sim]
 set.seed(iSeed)
 
@@ -21,17 +24,24 @@ cat("seed: ",iSeed,"\n")
 
 ## * path
 path <- "."
-path.res <- file.path(path,"Results","CoverageH1-1TTE")
+path.res <- file.path(path,"Results","H1-1TTE")
 if(dir.exists(path.res)==FALSE){
+    if(dir.exists(file.path(path,"Results"))==FALSE){
+        dir.create(file.path(path,"Results"))
+    }
     dir.create(path.res)
 }
-path.output <- file.path(path,"output","CoverageH1-1TTE")
+path.output <- file.path(path,"output","H1-1TTE")
 if(dir.exists(path.output)==FALSE){
+    if(dir.exists(file.path(path,"output"))==FALSE){
+        dir.create(file.path(path,"output"))
+    }
     dir.create(path.output)
 }
 
 ## * libraries
 library(BuyseTest)
+data.table::setDTthreads(1)
 library(data.table)
 
 ## * settings
