@@ -1,8 +1,8 @@
 ## * Header 
 ## path <- "p:/Cluster/GPC/Article-inference-Ustatistic - Rao/"
 ## setwd(path)
-## source("BATCH_SIMULATION-H0-mE.R")
-## sbatch -a 1-10 -J 'mytest' --output=/dev/null --error=/dev/null R CMD BATCH --vanilla BATCH_SIMULATION-H0-mE.R /dev/null 
+## source("BATCH_SIMULATION_H0-mE.R")
+## sbatch -a 1-10 -J 'mytest' --output=/dev/null --error=/dev/null R CMD BATCH --vanilla BATCH_SIMULATION_H0-mE.R /dev/null 
 
 rm(list = ls())
 gc()
@@ -24,14 +24,14 @@ cat("seed: ",iSeed,"\n")
 
 ## * path
 path <- "."
-path.res <- file.path(path,"Results","H0-mE")
+path.res <- file.path(path,"Results","SIMULATION_H0-mE")
 if(dir.exists(path.res)==FALSE){
     if(dir.exists(file.path(path,"Results"))==FALSE){
         dir.create(file.path(path,"Results"))
     }
     dir.create(path.res)
 }
-path.output <- file.path(path,"output","H0-mE")
+path.output <- file.path(path,"output","SIMULATION_H0-mE")
 if(dir.exists(path.output)==FALSE){
     if(dir.exists(file.path(path,"output"))==FALSE){
         dir.create(file.path(path,"output"))

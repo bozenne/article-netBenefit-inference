@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 17 2018 (09:40) 
 ## Version: 
-## Last-Updated: mar 30 2021 (15:23) 
+## Last-Updated: mar 31 2021 (09:42) 
 ##           By: Brice Ozenne
-##     Update #: 175
+##     Update #: 178
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -51,7 +51,8 @@ source("FCT-gg.R")
 ## * Loop
 n.datasim <- NROW(path.datasim)
 for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
-    iPath <- file.path(path.results, path.datasim[iDatasim,"folder"])
+    iFolder <- path.datasim[iDatasim,"folder"]
+    iPath <- file.path(path.results, iFolder)
 
     if(length(list.files(iPath))==0){next}
     cat(iDatasim,") ", path.datasim[iDatasim,"text"],"\n",sep="")
@@ -92,36 +93,13 @@ for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
                    formula = n + rep + sigma_empirical ~ Hprojection)
 
     ## ** export
-    iName.timing <- file.path(path.results,paste0("figTiming-",path.datasim[iDatasim,"folder"],".pdf"))
-    iTest <- try(ggsave(iGGtiming$plot, filename = iName.timing, width = 10, height = 9, device = cairo_pdf), silent = TRUE)
-    if(inherits(iTest, "try-error")){file.remove(iName.timing)}
+    saveRDS(iGGtiming$data, file = file.path(path.results,paste0("dataTiming-",iFolder,".rds")))
+    saveRDS(iGGbias$data, file = file.path(path.results,paste0("dataBias-",iFolder,".rds")))
+    saveRDS(iGGse$data, file = file.path(path.results,paste0("dataSe-",iFolder,".rds")))
+    saveRDS(iGGcoverage$data, file = file.path(path.results,paste0("dataCoverage-",iFolder,".rds")))
+    saveRDS(iTable$data, file = file.path(path.results,paste0("dataTable-",iFolder,".rds")))
+    saveRDS(iProj, file = file.path(path.results,paste0("dataProj-",iFolder,".rds")))
 
-    iName.bias <- file.path(path.results,paste0("figBias-",path.datasim[iDatasim,"folder"],".pdf"))
-    iTest <- try(ggsave(iGGbias$plot, filename = iName.bias, device = cairo_pdf), silent = TRUE)
-    if(inherits(iTest, "try-error")){file.remove(iName.bias)}
-
-    iName.se <- file.path(path.results,paste0("figSe-",path.datasim[iDatasim,"folder"],".pdf"))
-    try(ggsave(iGGse$plot, filename = iName.se, device = cairo_pdf), silent = TRUE)
-    if(inherits(iTest, "try-error")){file.remove(iName.se)}
-
-    iName.coverage <- file.path(path.results,paste0("figCoverage-",path.datasim[iDatasim,"folder"],".pdf"))
-    try(ggsave(iGGcoverage$plot + coord_cartesian(ylim = c(0.9,1)), filename = iName.coverage,
-           height = 7, width = 10, device = cairo_pdf), silent = TRUE)
-    if(inherits(iTest, "try-error")){file.remove(iName.coverage)}
-
-    fileConn <- file(file.path(path.results,paste0("table-",path.datasim[iDatasim,"folder"],".txt")))
-    writeLines(iTable$table, fileConn)
-    close(fileConn)
-
-    fileConn <- file(file.path(path.results,paste0("tableHproj-",path.datasim[iDatasim,"folder"],".txt")))
-    writeLines(capture.output(iProj), fileConn)
-    close(fileConn)
-
-    saveRDS(iDT, file = file.path(path.results,"raw",paste0("data-",path.datasim[iDatasim,"folder"],".rds")))
-    saveRDS(iGGtiming$data, file = file.path(path.results,paste0("dataTiming-",path.datasim[iDatasim,"folder"],".rds")))
-    saveRDS(iGGcoverage$data, file = file.path(path.results,paste0("dataCoverage-",path.datasim[iDatasim,"folder"],".rds")))
-    saveRDS(iTable$data, file = file.path(path.results,paste0("dataTable-",path.datasim[iDatasim,"folder"],".rds")))
-    saveRDS(iProj, file = file.path(path.results,paste0("dataProj-",path.datasim[iDatasim,"folder"],".rds")))
 }
 
 
