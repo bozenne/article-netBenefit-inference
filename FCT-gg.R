@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: mar 30 2021 (15:21) 
+## Last-Updated: mar 31 2021 (09:53) 
 ##           By: Brice Ozenne
-##     Update #: 278
+##     Update #: 282
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -212,18 +212,6 @@ ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expect
         keep.cols <- c("n", "method", "Hprojection", "threshold", "endpoint", "estimate", "lower.ci", "upper.ci")
         keep.cols <- keep.cols[keep.cols %in% names(data)]
 
-        test.by <- sapply(c("threshold","endpoint","Hprojection"), function(iBy){
-            length(unique(data[[iBy]]))>1
-        })
-        if(sum(test.by)>1){
-            stop("Only one of \"threshold\", \"endpoint\", and \"Hprojection\" can vary \n")
-        }
-        if(sum(test.by)>0){
-            by <- names(test.by)[which(test.by)]
-        }else{
-            by <- NULL
-        }
-    
         dtW.gg <- data[iFile %in% Ufile[file],.SD,.SDcols = keep.cols]
         if(is.null(expected)){
             if(is.numeric(dtW.gg$n)){
@@ -254,6 +242,18 @@ ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expect
         }
     }else if(type.data == "processed"){
         dtS.gg <- data
+    }
+
+    test.by <- sapply(c("threshold","endpoint","Hprojection"), function(iBy){
+        length(unique(dtS.gg[[iBy]]))>1
+    })
+    if(sum(test.by)>1){
+        stop("Only one of \"threshold\", \"endpoint\", and \"Hprojection\" can vary \n")
+    }
+    if(sum(test.by)>0){
+        by <- names(test.by)[which(test.by)]
+    }else{
+        by <- NULL
     }
 
     gg <- ggplot(dtS.gg, aes(x = n, y = coverage, group = scoring.rule, color = scoring.rule))
