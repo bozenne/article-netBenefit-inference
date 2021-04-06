@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar 31 2021 (09:38) 
 ## Version: 
-## Last-Updated: mar 31 2021 (09:58) 
+## Last-Updated: mar 31 2021 (10:12) 
 ##           By: Brice Ozenne
-##     Update #: 11
+##     Update #: 12
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -92,10 +92,10 @@ for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
 
     ## ** export
     iName.timing <- file.path(path.figures,paste0("figTiming-",iFolder,".pdf"))
-    iTest <- ggsave(iGGtiming$plot, filename = iName.timing, width = 10, height = 9, device = cairo_pdf)
+    ggsave(iGGtiming$plot, filename = iName.timing, width = 10, height = 9, device = cairo_pdf)
 
     iName.bias <- file.path(path.figures,paste0("figBias-",iFolder,".pdf"))
-    iTest <- ggsave(iGGbias$plot, filename = iName.bias, device = cairo_pdf)
+    ggsave(iGGbias$plot, filename = iName.bias, device = cairo_pdf)
 
     iName.se <- file.path(path.figures,paste0("figSe-",iFolder,".pdf"))
     ggsave(iGGse$plot, filename = iName.se, device = cairo_pdf)

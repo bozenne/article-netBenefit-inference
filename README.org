@@ -1,16 +1,38 @@
 This directory contains the R code used to generate the results
 presented in the article. It is organized as follows:
-- *the BATCH files* define the simulation studies. Each file was
-  excecuted 40 times using a different id (obtain using
-  =Sys.getenv("SGE_TASK_ID")= in R) and therefore a different seed
-  when randomly generating the data. The output of the simulations
-  were saved in a =Results= directory, not uploaded on Github to save
-  space but available upon request.  
 
-- *the BUILD file* gather the results of the various simulations by
-  reading the data in the =Results= directory. It creates the tables and figures of section 5: simulation study
+- *the SIMULATION files* run the simulation study for the section
+  "Studentized vs. standard a permutation test"
+  (=SIMULATION-comparisonWithPermutationTest.R=) and for supplementary
+  material B.2 (=SIMULATION-SM-comparison-bebu-lachin.R=). The latter
+  file imports functions defined in =FCT-Bebu-Lachin.R=.
 
-- *the ILLUSTRATION files* contains the code used to generate the results, tables, and figures for section 6. 
+- *the BATCH_SIMULATION files* define the simulation studies used in
+  the sections "Coverage of the asymptotic CIs". Each file was
+  excecuted 200 times using a different id and therefore a different
+  seed when randomly generating the data. The output of the
+  simulations were saved in a =Results= directory, not uploaded on
+  Github to save space but available upon request.
+
+- *the SUBM_SIMULATION files* are used to run the batch files via a
+  queuing system.
+
+- *the BUILD files* gather the results of the various simulations by
+  reading the data in the =Results= directory (=BUILD_results.R=) and
+  save key summary statistics in the =Results= folder. Then the file
+  =BUILD_graphtable.R= read these results and generate all figures and
+  tables and save them in the directories =figures= and =tables= (not
+  used in the article). Imports functions defined in =FCT-gg.R=.
+
+- *the FIGURE files* generate the figures displayed in the article and
+  save them in the directory =figures-article=. Imports functions
+  defined in =FCT-gg.R=.
+
+- *the TABLE files* generate the tables displayed in the article and save them in the directory =tables-article=.
+
+- *the ILLUSTRATION files* contains the code used to generate the
+  results for the section "Illustration" as well as the additional
+  illustration mentionned in supplementary material G.
 
 #+BEGIN_SRC R  :results output   :exports results  :session *R* :cache yes 
 sessionInfo()
@@ -28,7 +50,7 @@ LAPACK: /usr/local/lib64/R/lib/libRlapack.so
 locale:
  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
- [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [5] LC_MpONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
 [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
