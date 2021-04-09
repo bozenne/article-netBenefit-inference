@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: mar 31 2021 (09:53) 
+## Last-Updated: apr  9 2021 (18:17) 
 ##           By: Brice Ozenne
-##     Update #: 282
+##     Update #: 283
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -197,7 +197,7 @@ ggSe <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = N
 }
 
 ## * ggCoverage
-ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
+ggCoverage <- function(data, by, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
     require(ggthemes)
     type.data <- match.arg(type.data, c("raw","processed"))
     

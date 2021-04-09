@@ -1,0 +1,80 @@
+% latex table generated in R 4.0.2 by xtable 1.8-4 package
+
+% Fri Apr 09 18:37:56 2021
+
+\begin{table}[!h]
+
+\centering
+
+\begin{tabular}{lllllll}
+
+  \hline
+
+sample size & endpoint & scoring rule & bias & empirical \(\sigma_{\hat{\Delta},\hat{\Delta}}\) & estimated \(\sigma_{\hat{\Delta},\hat{\Delta}}\) & coverage \\ 
+
+  \hline
+
+\(n=m=\) 15/45 & 1 endpoint & Full data & <0.001 & 0.1589 & 0.1534 & 0.9440 \\ 
+
+   &  & Gehan & <0.001 & 0.0672 & 0.0651 & 0.0820 \\ 
+
+   &  & Peron & <0.001 & 0.2221 & NA & NA \\ 
+
+   [2mm] & 2 endpoints & Full data & <0.001 & 0.1914 & 0.1845 & 0.9457 \\ 
+
+   &  & Gehan & <0.001 & 0.1326 & 0.1291 & 0.0246 \\ 
+
+   &  & Peron & <0.001 & 0.2713 & NA & NA \\ 
+
+   [2mm] & 3 endpoints & Full data & <0.001 & 0.1945 & 0.1879 & 0.9470 \\ 
+
+   &  & Gehan & <0.001 & 0.1419 & 0.1381 & 0.0534 \\ 
+
+   &  & Peron & <0.001 & 0.2694 & NA & NA \\ 
+
+   [4mm]\(n=m=\) 60/180 & 1 endpoint & Full data & <0.001 & 0.0788 & 0.0783 & 0.9497 \\ 
+
+   &  & Gehan & <0.001 & 0.0331 & 0.0330 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.1116 & 0.1039 & 0.9301 \\ 
+
+   [2mm] & 2 endpoints & Full data & <0.001 & 0.0947 & 0.0942 & 0.9502 \\ 
+
+   &  & Gehan & <0.001 & 0.0658 & 0.0655 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.1342 & 0.1231 & 0.9226 \\ 
+
+   [2mm] & 3 endpoints & Full data & <0.001 & 0.0962 & 0.0957 & 0.9508 \\ 
+
+   &  & Gehan & <0.001 & 0.0704 & 0.0701 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.1336 & 0.1236 & 0.9259 \\ 
+
+   [4mm]\(n=m=\) 300/900 & 1 endpoint & Full data & <0.001 & 0.0352 & 0.0352 & 0.9504 \\ 
+
+   &  & Gehan & <0.001 & 0.0148 & 0.0148 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.0494 & 0.0487 & 0.9462 \\ 
+
+   [2mm] & 2 endpoints & Full data & <0.001 & 0.0423 & 0.0423 & 0.9499 \\ 
+
+   &  & Gehan & <0.001 & 0.0294 & 0.0294 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.0592 & 0.0580 & 0.9437 \\ 
+
+   [2mm] & 3 endpoints & Full data & <0.001 & 0.0430 & 0.0430 & 0.9501 \\ 
+
+   &  & Gehan & <0.001 & 0.0315 & 0.0314 & <0.001 \\ 
+
+   &  & Peron & <0.001 & 0.0590 & 0.0580 & 0.9448 \\ 
+
+   \hline
+
+\end{tabular}
+
+\caption{} 
+
+\label{}
+
+\end{table}
+
