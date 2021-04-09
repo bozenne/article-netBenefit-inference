@@ -28,6 +28,17 @@ dt.prodige[,table(toxicity, bras)]
 ##        3          67         81
 ##        4          34         36
 ##        5           1          1
+round(100*prop.table(dt.prodige[,table(toxicity, bras)],2),2)
+##         bras
+## toxicity Gemcitabine Folfirinox
+##        0        1.17       3.51
+##        1        2.92       4.09
+##        2       36.26      23.39
+##        3       39.18      47.37
+##        4       19.88      21.05
+##        5        0.58       0.58
+
+fisher.test(dt.prodige[,table(toxicity, bras)])
 
 ## * re-analysis
 ## censoring
@@ -69,33 +80,13 @@ summary(e.bench, unit = "s")
 ## 3 bootstrap 23.13373495 23.19421713 24.29345613 23.53133771 25.09936082 26.50863005     5   b
 
 ## * sensitivity analysis
-## several thresholds for the survival
-eSe.BT <- sensitivity(e.BT, threshold = list(OS=seq(0,6,0.5)), band = TRUE, adj.p.value = FALSE)
-autoplot(eSe.BT)
-autoplot(eSe.BT, ci = FALSE)
-autoplot(eSe.BT, band = FALSE)
+system.time(
+    eSe.BT <- sensitivity(e.BT, threshold = list(OS=seq(0,12,1), toxicity = 1:3), band = TRUE, adj.p.value = FALSE)
+)
+##  user  system elapsed 
+## 2.616   0.000   2.617 
+## autoplot(eSe.BT)
 
-gg <- ggplot(cbind("XXindexXX"= 1, eSe.BT), aes(x=OS))
-gg <- gg + geom_ribbon(aes(ymin=lower.band, ymax = upper.band, xmin = OS, xmax = OS, fill = ""), alpha = 0.5)
-gg <- gg + geom_errorbar(aes(ymin=lower.ci, ymax = upper.ci, x = OS, color = ""))
-gg <- gg + geom_line(aes(y=estimate, group = XXindexXX)) + geom_point(aes(y=estimate))
-gg <- gg + geom_hline(aes(yintercept = 0))
-gg <- gg + xlab("Threshold of minimal clinical significance for survival (months)") + ylab("Net benefit")
-gg <- gg + labs(fill = "Simulatenous confidence intervals", linetype = "confidence interval")
-
-
-attr(eSe.BT,"grid")
-help(geom_errorbar)
-gg <- gg + scale_linetype_manual(name = NULL,
-                                labels = c("simultaneous confidence intervals","point estimate"),
-                                values = c(2,1))
-gg <- gg + theme(text = element_text(size=10))
-
-coef(ls.e.BT[[1]], statistic = "netBenefit")
-confint(ls.e.BT[[1]])
-
-
-lapply(ls.e.BT,coef)
 
 ## * [not used] stratified analysis
 if(FALSE){
