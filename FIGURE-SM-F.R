@@ -16,6 +16,9 @@ source("FCT-gg.R")
 ## * Load results
 data.figureSMF.timing <- readRDS(file = file.path(path.results,"dataTiming-SIMULATION_H0-mE.rds"))
 
+data.figureSMF.H0a <- readRDS(file = file.path(path.results,"dataCoverage-SIMULATION_H0-1TTE.rds"))
+data.figureSMF.H0b <- readRDS(file = file.path(path.results,"dataCoverage-SIMULATION_H0-mE.rds"))
+
 data.figureSMF.H1a <- readRDS(file = file.path(path.results,"dataCoverage-SIMULATION_H1-1TTE.rds"))
 data.figureSMF.H1b <- readRDS(file = file.path(path.results,"dataCoverage-SIMULATION_H1-mE.rds"))
 
@@ -27,6 +30,13 @@ data.figureSMF.nmH1b <- readRDS(file = file.path(path.results,"dataCoverage-SIMU
 
 ## * Create figure
 figureSMF.timing <- ggTiming(data.figureSMF.timing, type.data = "processed", plot = FALSE) 
+
+figureSMF.H0a <- ggCoverage(data.figureSMF.H0a, type.data = "processed", plot = FALSE) 
+figureSMF.H0b <- ggCoverage(data.figureSMF.H0b, type.data = "processed", plot = FALSE) 
+figureSMF.H0 <- ggarrange(figureSMF.H0a$plot + coord_cartesian(ylim = c(0.9,1)),
+                          figureSMF.H0b$plot + coord_cartesian(ylim = c(0.9,1)),
+                          ncol = 1,
+                          common.legend = TRUE, legend = "bottom")
 
 figureSMF.H1a <- ggCoverage(data.figureSMF.H1a, type.data = "processed", plot = FALSE) 
 figureSMF.H1b <- ggCoverage(data.figureSMF.H1b, type.data = "processed", plot = FALSE) 
@@ -53,6 +63,7 @@ figureSMF.nmH1 <- ggarrange(figureSMF.nmH1a$plot + coord_cartesian(ylim = c(0.9,
 ## * Export
 ggsave(figureSMF.timing$plot, filename = file.path("figures-article","figureSMF-timing.pdf"), width = 10, height = 9, device = cairo_pdf)
 
+ggsave(figureSMF.H0, filename = file.path("figures-article","figureSMF-H0.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.H1, filename = file.path("figures-article","figureSMF-H1.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.nmH0, filename = file.path("figures-article","figureSMF-nmH0.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.nmH1, filename = file.path("figures-article","figureSMF-nmH1.pdf"), width = 10, height = 9, device = cairo_pdf)
