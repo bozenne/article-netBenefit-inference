@@ -1,6 +1,6 @@
-% latex table generated in R 3.6.3 by xtable 1.8-4 package
+% latex table generated in R 4.0.2 by xtable 1.8-4 package
 
-% Wed Mar 31 11:21:30 2021
+% Mon Apr 12 10:06:08 2021
 
 \begin{table}[!h]
 
