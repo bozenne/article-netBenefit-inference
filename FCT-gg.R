@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: apr  9 2021 (18:17) 
+## Last-Updated: apr  9 2021 (19:33) 
 ##           By: Brice Ozenne
-##     Update #: 283
+##     Update #: 284
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -228,7 +228,7 @@ ggCoverage <- function(data, by, type.data = "raw", file = NULL, plot = TRUE, ex
             }
         }
         dtW.gg[, coverage := (lower.ci < expected)*(upper.ci > expected)]
-        dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage)), by = c("n","method","Hprojection",by)]
+        dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage, na.rm=TRUE)), by = c("n","method","Hprojection",by)]
     
         dtS.gg[, n := factor(n, levels = sort(unique(n)))]
         dtS.gg[, method2 := paste0(method," H",Hprojection)]
