@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 % latex table generated in R 4.0.5 by xtable 1.8-4 package
 
 % Mon Apr 12 09:56:36 2021
+=======
+% latex table generated in R 4.0.2 by xtable 1.8-4 package
+
+% Mon Apr 12 10:06:08 2021
+>>>>>>> e997f44b735341885517dff4dbbf33d6227e234a
 
 \begin{table}[!h]
 

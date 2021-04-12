@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: Apr 12 2021 (09:58) 
+## Last-Updated: Apr 12 2021 (10:25) 
 ##           By: Brice Ozenne
-##     Update #: 287
+##     Update #: 288
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -316,6 +316,7 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
                    )
         if("Hprojection" %in% byVar){stop("Cannot handle several Hprojections")}
         dtS.table <- dt.table[, .(rep = .N,
+                                  seNA = sum(is.na(se)),
                                   bias = mean(estimate - expected),
                                   empirical= sd(estimate),
                                   estimated= mean(se, na.rm = TRUE),
