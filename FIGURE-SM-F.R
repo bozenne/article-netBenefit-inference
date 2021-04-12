@@ -62,8 +62,18 @@ figureSMF.nmH1 <- ggarrange(figureSMF.nmH1a$plot + coord_cartesian(ylim = c(0.9,
 
 ## * Export
 ggsave(figureSMF.timing$plot, filename = file.path("figures-article","figureSMF-timing.pdf"), width = 10, height = 9, device = cairo_pdf)
+## figureSMF.timing$data[n==1000, mean(time),by = c("scoring.rule","type")]
+##           scoring.rule               type        V1
+## 1: Gehan's scoring rule              ratio  1.110963
+## 2: Peron's scoring rule              ratio 20.863980
+## 3: Gehan's scoring rule estimate with s.e.  0.269020
+## 4: Peron's scoring rule estimate with s.e. 14.366780
+## 5: Gehan's scoring rule           estimate  0.242200
+## 6: Peron's scoring rule           estimate  0.688660
 
 ggsave(figureSMF.H0, filename = file.path("figures-article","figureSMF-H0.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.H1, filename = file.path("figures-article","figureSMF-H1.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.nmH0, filename = file.path("figures-article","figureSMF-nmH0.pdf"), width = 10, height = 9, device = cairo_pdf)
 ggsave(figureSMF.nmH1, filename = file.path("figures-article","figureSMF-nmH1.pdf"), width = 10, height = 9, device = cairo_pdf)
+
+

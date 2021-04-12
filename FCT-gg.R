@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: apr  9 2021 (19:33) 
+## Last-Updated: Apr 12 2021 (09:58) 
 ##           By: Brice Ozenne
-##     Update #: 284
+##     Update #: 287
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -307,7 +307,6 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
                 dt.table[dt.table[[by]] == Uby[iBy], expected := expected[iTh]]
         }
 
-
         ## ** summarize
         dt.table[, coverage := (lower.ci < expected)*(upper.ci>expected)]
         byVar <- c("n"[length(unique(dt.table$n))>1],
@@ -319,8 +318,8 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
         dtS.table <- dt.table[, .(rep = .N,
                                   bias = mean(estimate - expected),
                                   empirical= sd(estimate),
-                                  estimated= mean(se),
-                                  coverage =  mean(coverage)),
+                                  estimated= mean(se, na.rm = TRUE),
+                                  coverage =  mean(coverage, na.rm = TRUE)),
                               by = byVar]
     
     }else if(type.data == "processed"){

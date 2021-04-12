@@ -24,3 +24,12 @@ figure1 <- ggTiming(data.figure1, type.data = "processed", plot = FALSE)
 
 ## * Export
 ggsave(figure1$plot, filename = file.path("figures-article","figure1.pdf"), width = 10, height = 9, device = cairo_pdf)
+
+## figure1$data[n==1000,mean(time),by = c("method","type")]
+##    method               type        V1
+## 1:  Gehan              ratio  1.095203
+## 2:  Peron              ratio 18.363595
+## 3:  Gehan estimate with s.e.  0.126220
+## 4:  Peron estimate with s.e.  7.846810
+## 5:  Gehan           estimate  0.115260
+## 6:  Peron           estimate  0.427330

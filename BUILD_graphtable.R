@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar 31 2021 (09:38) 
 ## Version: 
-## Last-Updated: apr  6 2021 (10:07) 
+## Last-Updated: Apr 12 2021 (10:24) 
 ##           By: Brice Ozenne
-##     Update #: 14
+##     Update #: 17
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -52,7 +52,7 @@ source("FCT-gg.R")
 
 ## * Loop
 n.datasim <- NROW(path.datasim)
-for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
+for(iDatasim in 1:n.datasim){ ## iDatasim <- 2
     iFolder <- path.datasim[iDatasim,"folder"]
 
     ## ** load
