@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: okt 17 2018 (09:40) 
 ## Version: 
-## Last-Updated: mar 31 2021 (09:42) 
+## Last-Updated: apr  9 2021 (19:37) 
 ##           By: Brice Ozenne
-##     Update #: 178
+##     Update #: 180
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -50,7 +50,7 @@ source("FCT-gg.R")
 
 ## * Loop
 n.datasim <- NROW(path.datasim)
-for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
+for(iDatasim in 1:n.datasim){ ## iDatasim <- 2
     iFolder <- path.datasim[iDatasim,"folder"]
     iPath <- file.path(path.results, iFolder)
 
@@ -80,13 +80,14 @@ for(iDatasim in 1:n.datasim){ ## iDatasim <- 1
     }
 
     ## ** generate data for plot and tables
+	iBy <-  c("threshold","endpoint")[path.datasim[iDatasim,"endpoint"]+1]
+  
     iGGtiming <- ggTiming(iDT.bias, file = 1, type.data = "raw", plot = FALSE)
     iGGbias  <- ggBias(iDT.bias, file = 1, type.data = "raw", plot = FALSE)
     iGGse  <- ggSe(iDT.bias, type.data = "raw", plot = FALSE)
-    iGGcoverage  <- ggCoverage(iDT[Hprojection==1], type.data = "raw", plot = FALSE)
+    iGGcoverage  <- ggCoverage(iDT[Hprojection==1], type.data = "raw", plot = FALSE, by = iBy)
     iTable  <- createTable(iDT[n %in% keep.level.n & Hprojection==1], digits = 3, print = FALSE, trace = FALSE,
-                           by = if(path.datasim[iDatasim,"endpoint"]){"endpoint"}else{"threshold"})
-
+                           by = iBy)
     iProj <- dcast(iDT.bias[method == "Gehan", .(rep = .N, sigma_empirical = sd(estimate),sigma_Ustat = mean(se)),
                             by = c("Hprojection","n")],
                    value.var = "sigma_Ustat",

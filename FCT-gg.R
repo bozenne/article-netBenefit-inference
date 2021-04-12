@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: mar 31 2021 (09:53) 
+## Last-Updated: apr  9 2021 (19:33) 
 ##           By: Brice Ozenne
-##     Update #: 282
+##     Update #: 284
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -197,7 +197,7 @@ ggSe <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = N
 }
 
 ## * ggCoverage
-ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
+ggCoverage <- function(data, by, type.data = "raw", file = NULL, plot = TRUE, expected = NULL, txt.size = 20){
     require(ggthemes)
     type.data <- match.arg(type.data, c("raw","processed"))
     
@@ -228,7 +228,7 @@ ggCoverage <- function(data, type.data = "raw", file = NULL, plot = TRUE, expect
             }
         }
         dtW.gg[, coverage := (lower.ci < expected)*(upper.ci > expected)]
-        dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage)), by = c("n","method","Hprojection",by)]
+        dtS.gg <- dtW.gg[, .(rep = .N, coverage =  mean(coverage, na.rm=TRUE)), by = c("n","method","Hprojection",by)]
     
         dtS.gg[, n := factor(n, levels = sort(unique(n)))]
         dtS.gg[, method2 := paste0(method," H",Hprojection)]

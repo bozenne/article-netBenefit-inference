@@ -14,7 +14,7 @@ R CMD BATCH --vanilla BATCH_SIMULATION_H1-mE-nm.R output/SIMULATION_H1-mE-nm/R-$
 ## clean results      ## rm -r ./Results/SIMULATION_H1-mE-nm/*
 ## submission command ## sbatch SUBM_SIMULATION_H1-mE-nm.slurm
 
-## submission output  ## Submitted batch job 43823 (time using C-c t: 03/30/21 9:38 ) 
+## submission output  ## Submitted batch job 45418 (time using C-c t: 04/09/21 7:40  ) 
 
 ## commands           ## squeue           : view current jobs 
                       ## squeue -u id     : view current jobs for user id

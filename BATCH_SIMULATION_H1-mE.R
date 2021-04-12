@@ -45,7 +45,7 @@ data.table::setDTthreads(1)
 library(data.table)
 
 ## * settings
-n.sim <- 500
+n.sim <- 100
 seqN <- c(30,60,120,240,400,600,1000)
 BuyseTest.options(trace = 0, debug = 0)
 
