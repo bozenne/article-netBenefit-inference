@@ -38,6 +38,54 @@ presented in the article. It is organized as follows:
 sessionInfo()
 #+END_SRC
 
+#+RESULTS[<2021-04-13 14:29:22> 172bb0a30da12f62cbaf099dc2d234d396434475]:
+#+begin_example
+R version 4.0.5 (2021-03-31)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 20.04.2 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.9.0
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.9.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C               LC_TIME=en_US.UTF-8       
+ [4] LC_COLLATE=en_US.UTF-8     LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                  LC_ADDRESS=C              
+[10] LC_TELEPHONE=C             LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] BuyseTest_2.2.7   butils.base_1.2   devtools_2.3.2    usethis_2.0.1    
+[5] data.table_1.14.0 Rcpp_1.0.6       
+
+loaded via a namespace (and not attached):
+ [1] lattice_0.20-41          prettyunits_1.1.1        ps_1.6.0                
+ [4] rprojroot_2.0.2          digest_0.6.27            foreach_1.5.1           
+ [7] utf8_1.2.1               R6_2.5.0                 stats4_4.0.5            
+[10] ggplot2_3.3.3            pillar_1.5.1             rlang_0.4.10            
+[13] rstudioapi_0.13          callr_3.6.0              Matrix_1.3-2            
+[16] desc_1.3.0               splines_4.0.5            stringr_1.4.0           
+[19] munsell_0.5.0            compiler_4.0.5           xfun_0.22               
+[22] pkgconfig_2.0.3          pkgbuild_1.2.0           tidyselect_1.1.0        
+[25] tibble_3.1.0             prodlim_2019.11.13       roxygen2_7.1.1          
+[28] codetools_0.2-18         fansi_0.4.2              crayon_1.4.1            
+[31] dplyr_1.0.5              withr_2.4.1              grid_4.0.5              
+[34] gtable_0.3.0             lifecycle_1.0.0          magrittr_2.0.1          
+[37] scales_1.1.1             cli_2.4.0                stringi_1.5.3           
+[40] cachem_1.0.4             pbapply_1.4-3            fs_1.5.0                
+[43] RcppArmadillo_0.10.2.2.0 remotes_2.3.0            doParallel_1.0.16       
+[46] testthat_3.0.2           xml2_1.3.2               ellipsis_0.3.1          
+[49] generics_0.1.0           vctrs_0.3.7              lava_1.6.9              
+[52] iterators_1.0.13         tools_4.0.5              glue_1.4.2              
+[55] purrr_0.3.4              processx_3.5.1           pkgload_1.2.0           
+[58] parallel_4.0.5           fastmap_1.1.0            survival_3.2-10         
+[61] colorspace_2.0-0         sessioninfo_1.1.1        memoise_2.0.0           
+[64] knitr_1.31
+#+end_example
+
 #+begin_example
 R version 3.6.1 (2019-07-05)
 Platform: x86_64-pc-linux-gnu (64-bit)

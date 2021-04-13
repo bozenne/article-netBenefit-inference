@@ -1,4 +1,5 @@
 ## * data + package
+library(exact2x2)
 source("ILLUSTRATION-0-data-management.R")
 
 ## * check values from the article
@@ -38,6 +39,16 @@ round(100*prop.table(dt.prodige[,table(toxicity, bras)],2),2)
 ##        4       19.88      21.05
 ##        5        0.58       0.58
 
+colSums(100*prop.table(dt.prodige[,table(toxicity, bras)],2)[4:6,])
+## Gemcitabine  Folfirinox 
+##    59.64912    69.00585 
+
+uncondExact2x2(x1 = table(dt.prodige$toxicity>=3,dt.prodige$bras)["TRUE","Gemcitabine"],
+               n1 = sum(dt.prodige$bras=="Gemcitabine"),
+               x2 = table(dt.prodige$toxicity>=3,dt.prodige$bras)["TRUE","Folfirinox"],
+               n2 = sum(dt.prodige$bras=="Folfirinox"), conf.int = TRUE)
+
+
 fisher.test(dt.prodige[,table(toxicity, bras)])
 
 ## * re-analysis
@@ -48,43 +59,82 @@ dt.prodige[,.(censoring=100*mean(etat==0)), by = "bras"]
 ## 2:  Folfirinox  26.31579
 
 ## ustat
-e.BT <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity, threshold = 0.5, operator = "<0"),
+e.BT <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity, threshold = 1, operator = "<0"),
                   data = dt.prodige, method.inference = "u-statistic")
 summary(e.BT)
 ## endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)   delta  Delta CI [2.5% ; 97.5%]    p.value    
 ##       OS       2.0   100.00        56.88          26.49      16.61     0.02  0.3039 0.3039   [0.1819;0.4166] 2.1557e-06 ***
 ## toxicity       0.5    16.63         4.41           6.53       5.69     0.00 -0.0212 0.2827   [0.1583;0.3982] 1.3650e-05 ***
 
+
+
 ## boostrap
 e.BT_boot <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity, threshold = 0.5, operator = "<0"),
-                       data = dt.prodige, method.inference = "bootstrap", n.resampling = 1e4, seed = 10,
+                       data = dt.prodige, method.inference = "bootstrap", n.resampling = 1e4, seed = 10, cpus = 10,
                        trace = 1)
 summary(e.BT_boot)
  ## endpoint threshold total(%) favorable(%) unfavorable(%) neutral(%) uninf(%)   delta  Delta CI [2.5% ; 97.5%]    p.value    
  ##       OS       2.0   100.00        56.88          26.49      16.61     0.02  0.3039 0.3039   [0.1852;0.4206] < 2.22e-16 ***
  ## toxicity       0.5    16.63         4.41           6.53       5.69     0.00 -0.0212 0.2827   [0.1607;0.4018] < 2.22e-16 ***
 
+## 6.5/16.63
+## [1] 0.3908599
+## > 4.41/16.61
+## [1] 0.2655027
+
+confint(e.BT)
+##             estimate         se  lower.ci  upper.ci      p.value
+## OS_2       0.3038845 0.06014829 0.1818654 0.4166871 2.188018e-06
+## toxicity_1 0.2826621 0.06152741 0.1581706 0.3983080 1.390671e-05
+confint(e.BT_boot)
+##               estimate         se  lower.ci  upper.ci p.value
+## OS_2         0.3038845 0.06076773 0.1825247 0.4221415       0
+## toxicity_0.5 0.2826621 0.06218618 0.1571735 0.4034210       0
+
 ## * timing
-library(microbenchmark)
-e.bench <- microbenchmark(none = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
-                                           data = dt.prodige, method.inference = "none"),
-                          Ustat = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
-                                            data = dt.prodige, method.inference = "u-statistic"),
-                          bootstrap = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
-                                                data = dt.prodige, method.inference = "bootstrap"),
-                          times = 5)
-summary(e.bench, unit = "s")
-## >        expr         min          lq        mean      median          uq         max neval cld
-## 1      none  0.02995687  0.03716029  0.03944084  0.04019474  0.04189177  0.04800055     5  a 
-## 2     Ustat  0.09199358  0.09573385  0.10499052  0.09789393  0.11656605  0.12276522     5  a 
-## 3 bootstrap 23.13373495 23.19421713 24.29345613 23.53133771 25.09936082 26.50863005     5   b
+## library(microbenchmark)
+## e.bench <- microbenchmark(none = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+##                                            data = dt.prodige, method.inference = "none"),
+##                           Ustat = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+##                                             data = dt.prodige, method.inference = "u-statistic"),
+##                           bootstrap = BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity.num, threshold = 0.5),
+##                                                 data = dt.prodige, method.inference = "bootstrap"),
+##                           times = 5)
+## summary(e.bench, unit = "s")
+## ## >        expr         min          lq        mean      median          uq         max neval cld
+## ## 1      none  0.02995687  0.03716029  0.03944084  0.04019474  0.04189177  0.04800055     5  a 
+## ## 2     Ustat  0.09199358  0.09573385  0.10499052  0.09789393  0.11656605  0.12276522     5  a 
+## ## 3 bootstrap 23.13373495 23.19421713 24.29345613 23.53133771 25.09936082 26.50863005     5   b
+
+system.time(
+    BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity, threshold = 0.5, operator = "<0"),
+              data = dt.prodige, method.inference = "bootstrap", n.resampling = 1e4, seed = 10, cpus = 1,
+              trace = 1)
+)
+##    user  system elapsed 
+## 148.399   0.039 148.479 
+
+microbenchmark::microbenchmark(
+                    BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity, threshold = 1, operator = "<0"),
+                              data = dt.prodige, method.inference = "u-statistic", trace = FALSE)
+                )
+## Unit: milliseconds
+##                                                                                                                                                                                    expr
+##  BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity,      threshold = 1, operator = "<0"), data = dt.prodige, method.inference = "u-statistic",      trace = FALSE)
+##       min       lq     mean   median       uq      max neval
+##  41.12059 41.82398 44.99263 44.25925 45.45983 133.0568   100
 
 ## * sensitivity analysis
 system.time(
-    eSe.BT <- sensitivity(e.BT, threshold = list(OS=seq(0,12,1), toxicity = 1:3), band = TRUE, adj.p.value = FALSE)
+    eSe.BT <- sensitivity(e.BT, threshold = list(OS=seq(0,12,1), toxicity = 1:3), band = FALSE, adj.p.value = FALSE)
 )
 ##  user  system elapsed 
-## 2.616   0.000   2.617 
+## 1.866   0.000   1.866 
+system.time(
+    eSe.BT <- sensitivity(e.BT, threshold = list(OS=seq(0,12,1), toxicity = 1:3), band = TRUE, adj.p.value = FALSE)
+)
+## user  system elapsed 
+## 3.203   0.012   3.229
 ## autoplot(eSe.BT)
 
 

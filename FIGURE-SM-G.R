@@ -17,7 +17,7 @@ source("FCT-gg.R")
 
 
 ## * load data
-source("ILLUSTRATION2-biomarker.R")
+source("ILLUSTRATION-SM-biomarker.R")
 
 ## * Create figure
 ## ** scatterplot

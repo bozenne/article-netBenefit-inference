@@ -3,9 +3,9 @@
 ## Author: Brice Ozenne
 ## Created: mar  4 2020 (11:05) 
 ## Version: 
-## Last-Updated: Apr 12 2021 (10:25) 
+## Last-Updated: Apr 12 2021 (10:40) 
 ##           By: Brice Ozenne
-##     Update #: 288
+##     Update #: 299
 ##----------------------------------------------------------------------
 ## 
 ### Commentary: 
@@ -334,7 +334,8 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
     dtSS.table[, rep := NULL]
     
     setkeyv(dtSS.table,c("n",by))
-
+    dtSS.table[, seNA := NULL]
+    
     dtSS.table[[by]] <- as.character(dtSS.table[[by]])
     dtSS.table[duplicated(interaction(dtSS.table$n,dtSS.table[[by]])), c(by) := ""]
     dtSS.table$n <- paste0("\\(n=m=\\) ",dtSS.table$n)
@@ -349,7 +350,7 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
                                   labels = c("Full data","Gehan", "Peron"))]
     setnames(dtSS.table, old = "method", new = "scoring rule")
 
-    dtSS.table[, bias := format.pval(bias, digits = digits, eps = 10^(-digits))]
+    dtSS.table[, bias := gsub("<","\\(<\\)",format.pval(bias, digits = digits, eps = 10^(-digits)), fixed = TRUE)]
     dtSS.table[, empirical := format.pval(empirical, digits = digits, eps = 10^(-digits))]
     dtSS.table[, estimated := format.pval(estimated, digits = digits, eps = 10^(-digits))]
     dtSS.table[, coverage := format.pval(coverage, digits = digits, eps = 10^(-digits))]
@@ -368,12 +369,11 @@ createTable <- function(data, by, type.data = "raw", file = NULL, expected = NUL
 
     addtorow$pos <- addtorow$pos[-length(addtorow$pos)]
     addtorow$command <- addtorow$command[-length(addtorow$command)]
-
-    mytable <- sapply(capture.output(print(out, add.to.row = addtorow, include.rownames=FALSE, include.colnames = TRUE,
+    mytable <- capture.output(print(out, add.to.row = addtorow, include.rownames=FALSE, include.colnames = TRUE,
                                     sanitize.colnames.function = identity,
                                     sanitize.text.function = identity,
-                                    table.placement = "!h")), paste0, "\n")
-    if(print){cat(mytable) }
+                                    table.placement = "!h"))
+    if(print){print(mytable) }
 
     ## ** export 
     return(invisible(list(table = mytable,
