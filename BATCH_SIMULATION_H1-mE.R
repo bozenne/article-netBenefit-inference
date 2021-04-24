@@ -59,8 +59,8 @@ for(iN in 1:length(seqN)){ ## iN <- 5
         dt <- simBuyseTest(seqN[iN],
                            argsBin = list(p.T = c(0.8,0.2),
                                           p.C = c(0.2,0.8)),
-                           argsTTE = list(scale.T = 2,
-                                          scale.C = 1,
+                           argsTTE = list(scale.T = 1,
+                                          scale.C = 2,
                                           scale.Censoring.C = 1,
                                           scale.Censoring.T = 1),
                            latent = TRUE)
