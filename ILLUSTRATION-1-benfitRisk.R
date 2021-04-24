@@ -1,6 +1,7 @@
 ## * data + package
 library(exact2x2)
 source("ILLUSTRATION-0-data-management.R")
+options(width = 120)
 
 ## * check values from the article
 dt.prodige[,.N, by = "bras"]
@@ -136,7 +137,6 @@ system.time(
 ## user  system elapsed 
 ## 3.203   0.012   3.229
 ## autoplot(eSe.BT)
-
 
 ## * [not used] stratified analysis
 if(FALSE){

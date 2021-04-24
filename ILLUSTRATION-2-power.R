@@ -160,7 +160,6 @@ simTrial <- function(n.C,n.T){
 }
 ## BuyseTest(treatment ~ tte(eventtime, status, threshold = 2) + cont(toxicity.num, threshold = 0.5, operator = "<0"), data = simTrial(1000,1000))
 
-
 ## ** 1 CPUS, n.rep = 100
 tps0 <- system.time(
     e0.power <- powerBuyseTest(sim = simTrial,
@@ -174,16 +173,16 @@ summary(e0.power, endpoint = c("eventtime_2","toxicity.num_0.5"))
 ##         Simulation study with Generalized pairwise comparison
 ##         with 100 samples
 
- ## - statistic   : net benefit (null hypothesis Delta=0)
- ##     endpoint threshold n.T n.C mean.estimate sd.estimate mean.se rejection.rate
- ##    eventtime         2  50  50         0.259      0.1105  0.1119          0.602
- ##                        100 100        0.2606      0.0785  0.0791           0.89
- ##                        150 150        0.2603      0.0631  0.0646          0.975
- ##                        200 200        0.2602      0.0532  0.0559          0.995
- ## toxicity.num       0.5  50  50        0.2396      0.1128  0.1149          0.522
- ##                        100 100        0.2407      0.0804  0.0812           0.83
- ##                        150 150        0.2402      0.0647  0.0663          0.942
- ##                        200 200        0.2403      0.0547  0.0574          0.984
+##  - statistic   : net benefit (null hypothesis Delta=0)
+##      endpoint threshold n.T n.C mean.estimate sd.estimate mean.se rejection.rate
+##     eventtime         2  50  50         0.268      0.1262  0.1115           0.63
+##                         100 100        0.2562      0.0884  0.0792           0.84
+##                         150 150        0.2543      0.0677  0.0647           0.98
+##                         200 200        0.2537      0.0574  0.0561              1
+##  toxicity.num       0.5  50  50        0.2489      0.1268  0.1146           0.57
+##                         100 100        0.2377      0.0887  0.0812           0.74
+##                         150 150        0.2356      0.0683  0.0663           0.94
+##                         200 200         0.235      0.0582  0.0575           0.97
 
 ##  n.T          : number of observations in the treatment group
 ##  n.C          : number of observations in the control group
@@ -196,6 +195,25 @@ summary(e0.power, endpoint = c("eventtime_2","toxicity.num_0.5"))
 tps0
 ##   user  system elapsed 
 ## 22.045   0.004  22.058 
+
+tps0.boot <- system.time(
+    e0.power.boot <- powerBuyseTest(sim = simTrial,
+                               formula = treatment ~ tte(eventtime, status, threshold = 2) + cont(toxicity.num, threshold = 0.5, operator = "<0"),
+                               sample.size = c(50,100,150,200),
+                               n.rep = 100, seed = 10, n.resampling = 1000,
+                               method.inference = "bootstrap")
+)
+
+e0.power.boot
+##      n  estimate empirical.se   model.se power
+## 1:  50 0.2306567   0.12301627 0.11591107  0.51
+## 2: 100 0.2492663   0.08218933 0.08128773  0.85
+## 3: 150 0.2345667   0.06170268 0.06663127  0.93
+## 4: 200 0.2483893   0.05592158 0.05743675  0.99
+
+tps0.boot
+##     user   system  elapsed 
+## 5166.951    1.051 5168.243 
 
 ## ** 10 CPUS, n.rep = 1000
 tps1 <- system.time(
@@ -210,16 +228,16 @@ summary(e1.power, endpoint = c("eventtime_2","toxicity.num_0.5"))
 ##         Simulation study with Generalized pairwise comparison
 ##         with 1000 samples
 
- ## - statistic   : net benefit (null hypothesis Delta=0)
- ##     endpoint threshold n.T n.C mean.estimate sd.estimate mean.se rejection.rate
- ##    eventtime         2  50  50         0.259      0.1105  0.1119          0.602
- ##                        100 100        0.2606      0.0785  0.0791           0.89
- ##                        150 150        0.2603      0.0631  0.0646          0.975
- ##                        200 200        0.2602      0.0532  0.0559          0.995
- ## toxicity.num       0.5  50  50        0.2396      0.1128  0.1149          0.522
- ##                        100 100        0.2407      0.0804  0.0812           0.83
- ##                        150 150        0.2402      0.0647  0.0663          0.942
- ##                        200 200        0.2403      0.0547  0.0574          0.984
+##  - statistic   : net benefit (null hypothesis Delta=0)
+##      endpoint threshold n.T n.C mean.estimate sd.estimate mean.se rejection.rate
+##     eventtime         2  50  50        0.2585      0.1112  0.1119          0.605
+##                         100 100        0.2605      0.0795  0.0791          0.886
+##                         150 150        0.2606      0.0638  0.0646          0.975
+##                         200 200        0.2602      0.0533  0.0559          0.995
+##  toxicity.num       0.5  50  50         0.239      0.1139   0.115          0.522
+##                         100 100        0.2404      0.0816  0.0812          0.826
+##                         150 150        0.2403      0.0654  0.0663          0.941
+##                         200 200        0.2403      0.0548  0.0574          0.984
 
 ##  n.T          : number of observations in the treatment group
 ##  n.C          : number of observations in the control group
@@ -237,24 +255,23 @@ tps1
 tps2 <- system.time(
     e2.power <- powerBuyseTest(sim = simTrial,
                                formula = treatment ~ tte(eventtime, status, threshold = 2) + cont(toxicity.num, threshold = 0.5, operator = "<0"),
-                               sample.size = c(50,92,93,94,95,96,100),
-                               n.rep = 1000, seed = 10, cpus = 10,
+                               sample.size = c(50,94,95,95,96,97,100),
+                               n.rep = 10000, seed = 10, cpus = 10,
                                method.inference = "u-statistic")
 )
 
 summary(e2.power)
 ##         Simulation study with Generalized pairwise comparison
-##         with 1000 samples
+##         with 10000 samples
 
 ##  - statistic   : net benefit (null hypothesis Delta=0)
 ##      endpoint threshold n.T n.C mean.estimate sd.estimate mean.se rejection.rate
-##  toxicity.num       0.5  50  50        0.2516      0.1161   0.114          0.571
-##                          83  83         0.254      0.0893  0.0884          0.791
-##                          84  84        0.2541      0.0888  0.0879            0.8
-##                          85  85        0.2541      0.0887  0.0874          0.803
-##                          86  86        0.2542      0.0882  0.0868            0.8
-##                          87  87        0.2538      0.0877  0.0864          0.804
-##                         100 100        0.2538      0.0813  0.0805          0.864
+##  toxicity.num       0.5  50  50        0.2387      0.1151  0.1149         0.5141
+##                          93  93        0.2389      0.0837  0.0842         0.7876
+##                          94  94        0.2391      0.0834  0.0838         0.7918
+##                          95  95         0.239      0.0831  0.0833         0.7957
+##                          97  97         0.239      0.0823  0.0825         0.8028
+##                         100 100        0.2392      0.0811  0.0812         0.8172
 
 ##  n.T          : number of observations in the treatment group
 ##  n.C          : number of observations in the control group

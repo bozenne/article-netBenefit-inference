@@ -2,14 +2,11 @@ path.figures <- "figures-article"
 
 ## * data + packages
 source("ILLUSTRATION-0-data-management.R")
+library(xtable)
 
 ## * BuyseTest
 e.BT <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2) + cont(toxicity, threshold = 1, operator = "<0"),
                   data = dt.prodige, method.inference = "u-statistic")
-
-e.BT_boot <- BuyseTest(bras ~ tte(OS, status = etat, threshold = 2)  + cont(toxicity, threshold = 1, operator = "<0"),
-                       data = dt.prodige, method.inference = "bootstrap", n.resampling = 1e4, seed = 10, cpus = 10,
-                       trace = 1)
 
 table3 <- xtable(apply(summary(e.BT, print = FALSE, digit = c(2,4,2))$table.print[,-c(2:3,12),],2,as.character))
 print(table3, include.rownames = FALSE)
