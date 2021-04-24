@@ -48,6 +48,14 @@ uncondExact2x2(x1 = table(dt.prodige$toxicity>=3,dt.prodige$bras)["TRUE","Gemcit
                n1 = sum(dt.prodige$bras=="Gemcitabine"),
                x2 = table(dt.prodige$toxicity>=3,dt.prodige$bras)["TRUE","Folfirinox"],
                n2 = sum(dt.prodige$bras=="Folfirinox"), conf.int = TRUE)
+## data:  x1/n1=(102/171) and x2/n2= (118/171)
+## proportion 1 = 0.59649, proportion 2 = 0.69006, p-value = 0.07418
+## alternative hypothesis: true p2-p1 is not equal to 0
+## 95 percent confidence interval:
+##  -0.009435654  0.200794220
+## sample estimates:
+##      p2-p1 
+## 0.09356725 
 
 
 fisher.test(dt.prodige[,table(toxicity, bras)])
