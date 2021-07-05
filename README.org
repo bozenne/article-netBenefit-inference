@@ -1,5 +1,6 @@
 This directory contains the R code used to generate the results
-presented in the article. It is organized as follows:
+presented in the article 'The asymptotic distribution of the net benefit estimator in presence of right-censoring'. 
+It is organized as follows:
 
 - *the SIMULATION files* run the simulation study for the section
   "Studentized vs. standard a permutation test"
