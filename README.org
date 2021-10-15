@@ -1,7 +1,7 @@
 This directory contains the R code used to generate the results
 presented in the article 'The asymptotic distribution of the net 
 benefit estimator in presence of right-censoring' by Ozenne B, Budtz-Jørgensen E, Péron J. 
-published in Statistical Methods in Medical Research (2021). 
+published in Statistical Methods in Medical Research (2021, link: https://doi.org/10.1177%2F09622802211037067). 
 
 It is organized as follows:
 
@@ -42,7 +42,6 @@ It is organized as follows:
 sessionInfo()
 #+END_SRC
 
-#+RESULTS[<2021-04-13 14:29:22> 172bb0a30da12f62cbaf099dc2d234d396434475]:
 #+begin_example
 R version 4.0.5 (2021-03-31)
 Platform: x86_64-pc-linux-gnu (64-bit)
