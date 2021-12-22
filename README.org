@@ -1,5 +1,9 @@
 This directory contains the R code used to generate the results
-presented in the article. It is organized as follows:
+presented in the article 'The asymptotic distribution of the net 
+benefit estimator in presence of right-censoring' by Ozenne B, Budtz-Jørgensen E, Péron J. 
+published in Statistical Methods in Medical Research (2021, link: https://doi.org/10.1177%2F09622802211037067). 
+
+It is organized as follows:
 
 - *the SIMULATION files* run the simulation study for the section
   "Studentized vs. standard a permutation test"
