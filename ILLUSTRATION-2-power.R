@@ -169,7 +169,7 @@ tps0 <- system.time(
                                method.inference = "u-statistic")
 )
 
-summary(e0.power, endpoint = c("eventtime_2","toxicity.num_0.5"))
+summary(e0.power, endpoint = c("eventtime_t2","toxicity.num_t0.5"))
 ##         Simulation study with Generalized pairwise comparison
 ##         with 100 samples
 
@@ -224,7 +224,7 @@ tps1 <- system.time(
                                method.inference = "u-statistic")
 )
 
-summary(e1.power, endpoint = c("eventtime_2","toxicity.num_0.5"))
+summary(e1.power, endpoint = c("eventtime_t2","toxicity.num_t0.5"))
 ##         Simulation study with Generalized pairwise comparison
 ##         with 1000 samples
 
